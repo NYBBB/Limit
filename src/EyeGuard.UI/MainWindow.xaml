@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="EyeGuard.UI.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:EyeGuard.UI"
+    xmlns:tb="using:H.NotifyIcon"
+    Title="Limit">
+
+    <!-- 启用 Mica 背景材质 -->
+    
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <!-- 左侧导航栏 -->
+            <ColumnDefinition Width="240"/>
+            <!-- 右侧内容区 -->
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- 系统托盘图标 -->
+        <tb:TaskbarIcon x:Name="TrayIcon"
+                        IconSource="/Assets/icon.ico"
+                        ToolTipText="Limit - 心流"
+                        LeftClickCommand="{x:Bind ShowWindowCommand}">
+            <tb:TaskbarIcon.ContextFlyout>
+                <MenuFlyout>
+                    <MenuFlyoutItem Text="显示主窗口" Click="ShowWindow_Click"/>
+                    <MenuFlyoutSeparator/>
+                    <MenuFlyoutItem Text="开始监测" Click="StartMonitoring_Click"/>
+                    <MenuFlyoutItem Text="暂停监测" Click="StopMonitoring_Click"/>
+                    <MenuFlyoutSeparator/>
+                    <MenuFlyoutItem Text="退出" Click="ExitApp_Click"/>
+                </MenuFlyout>
+            </tb:TaskbarIcon.ContextFlyout>
+        </tb:TaskbarIcon>  
+        
+        <!-- 左侧导航面板 -->
+        <Border Grid.Column="0" 
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,0,1,0">
+            
+            <NavigationView x:Name="NavView"
+                            IsBackButtonVisible="Collapsed"
+                            IsPaneToggleButtonVisible="False"
+                            IsSettingsVisible="False"
+                            PaneDisplayMode="Left"
+                            OpenPaneLength="240"
+                            SelectionChanged="NavView_SelectionChanged">
+                
+                <NavigationView.MenuItems>
+                    <NavigationViewItem Tag="Dashboard" Content="今日" IsSelected="True">
+                        <NavigationViewItem.Icon>
+                            <FontIcon Glyph="&#xE706;"/>
+                        </NavigationViewItem.Icon>
+                    </NavigationViewItem>
+                    
+                    <NavigationViewItem Tag="Analytics" Content="分析">
+                        <NavigationViewItem.Icon>
+                            <FontIcon Glyph="&#xE9D9;"/>
+                        </NavigationViewItem.Icon>
+                    </NavigationViewItem>
+                    
+                    <NavigationViewItemSeparator/>
+                    
+                    <NavigationViewItem Tag="Rules" Content="规则">
+                        <NavigationViewItem.Icon>
+                            <FontIcon Glyph="&#xE823;"/>
+                        </NavigationViewItem.Icon>
+                    </NavigationViewItem>
+                    
+                    <NavigationViewItem Tag="Settings" Content="设置">
+                        <NavigationViewItem.Icon>
+                            <FontIcon Glyph="&#xE713;"/>
+                        </NavigationViewItem.Icon>
+                    </NavigationViewItem>
+                </NavigationView.MenuItems>
+            </NavigationView>
+        </Border>
+
+        <!-- 右侧内容区 -->
+        <Frame x:Name="ContentFrame" Grid.Column="1"/>
+        
+    </Grid>
+</Window>
