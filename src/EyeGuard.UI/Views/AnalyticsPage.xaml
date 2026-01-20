@@ -16,52 +16,66 @@
             
             <TextBlock Text="数据分析" FontSize="28" FontWeight="SemiBold"/>
             
+            <!-- 日期选择器 -->
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1" CornerRadius="8" Padding="16">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBlock Text="📅 日期选择:" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                    
+                    <Button Content="今天" Command="{Binding SelectTodayCommand}" MinWidth="80"/>
+                    <Button Content="昨天" Command="{Binding SelectYesterdayCommand}" MinWidth="80"/>
+                    <Button Content="一周前" Command="{Binding SelectWeekAgoCommand}" MinWidth="80"/>
+                    
+                    <CalendarDatePicker 
+                        Date="{Binding SelectedDate, Mode=TwoWay}"
+                        PlaceholderText="选择日期"
+                        MinWidth="150"/>
+                    
+                    <TextBlock Text="{Binding SelectedDateText}" 
+                               VerticalAlignment="Center" 
+                               FontSize="14"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+            </Border>
+            
+            <!-- 疲劳趋势图 -->
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1" CornerRadius="8" Padding="24">
+                <StackPanel>
+                    <TextBlock Text="疲劳趋势" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                    
+                    <lvc:CartesianChart 
+                        Height="250"
+                        Series="{Binding FatigueTrendSeries}"
+                        XAxes="{Binding FatigueXAxes}"
+                        YAxes="{Binding FatigueYAxes}"
+                        TooltipPosition="Top"/>
+                </StackPanel>
+            </Border>
+            
             <!-- 24小时应用使用分布 -->
             <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1" CornerRadius="8" Padding="24">
                 <StackPanel>
-                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,0,0,16">
-                        <TextBlock Text="24小时应用使用分布" FontSize="20" FontWeight="SemiBold"/>
-                        <TextBlock Text="(今日)" 
-                                   FontSize="14" 
-                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                   VerticalAlignment="Bottom"
-                                   Margin="0,0,0,2"/>
-                    </StackPanel>
+                    <TextBlock Text="24小时应用使用分布" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,16"/>
                     
                     <!-- LiveCharts2 柱状图 -->
                     <lvc:CartesianChart 
                         Height="300"
                         Series="{Binding HourlyUsageSeries}"
-                        XAxes="{Binding XAxes}"
-                        YAxes="{Binding YAxes}"
+                        XAxes="{Binding UsageXAxes}"
+                        YAxes="{Binding UsageYAxes}"
                         LegendPosition="Bottom"
+                        LegendTextPaint="{Binding LegendPaint}"
                         TooltipPosition="Top"/>
                     
                     <TextBlock Text="💡 提示：图表展示每小时内全天使用最多的前8个应用 + 其他应用" 
                                FontSize="12" 
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Margin="0,12,0,0"/>
-                </StackPanel>
-            </Border>
-
-            <!-- 疲劳趋势图 (占位) -->
-            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1" CornerRadius="8" Padding="24">
-                <StackPanel>
-                    <TextBlock Text="疲劳趋势" FontSize="20" FontWeight="SemiBold"/>
-                    
-                    <Border Height="200" Margin="0,16,0,0"
-                            CornerRadius="8"
-                            Background="{ThemeResource LayerFillColorDefaultBrush}">
-                        <TextBlock Text="历史疲劳趋势功能即将推出 (P1.2)" 
-                                   HorizontalAlignment="Center" 
-                                   VerticalAlignment="Center"
-                                   FontSize="12"
-                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                    </Border>
                 </StackPanel>
             </Border>
 

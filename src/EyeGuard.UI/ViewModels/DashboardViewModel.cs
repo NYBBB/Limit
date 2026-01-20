@@ -193,11 +193,17 @@ public partial class DashboardViewModel : ObservableObject
                 Name = "疲劳值",
                 Fill = new SolidColorPaint(new SKColor(138, 43, 226, 40)),  // 填充区域半透明紫色
                 Stroke = new SolidColorPaint(new SKColor(138, 43, 226)) { StrokeThickness = 3 },  // 线条粗细从2增加到3
-                GeometrySize = 12,  // 数据点大小从6增加到12
+                GeometrySize = 8,  // 数据点大小从6增加到12
                 GeometryFill = new SolidColorPaint(new SKColor(138, 43, 226)),  // 紫色圆点填充
-                GeometryStroke = new SolidColorPaint(SKColors.White) { StrokeThickness = 2 },  // 白色边框
+                GeometryStroke = null,
                 LineSmoothness = 0.3,  // 稍微降低平滑度，让线条更直接连接点
             }
+        };
+
+        // 创建支持中文的字体
+        var labelPaint = new SolidColorPaint(new SKColor(150, 150, 150))
+        {
+            SKTypeface = SKTypeface.FromFamilyName("Microsoft YaHei", SKFontStyle.Normal)
         };
 
         XAxes = new Axis[]
@@ -210,6 +216,7 @@ public partial class DashboardViewModel : ObservableObject
                 MinStep = 2,
                 Labeler = value => value.ToString(),
                 TextSize = 12,
+                LabelsPaint = labelPaint,
             }
         };
 
@@ -223,6 +230,8 @@ public partial class DashboardViewModel : ObservableObject
                 MinStep = 20,
                 Labeler = value => $"{value}%",
                 TextSize = 12,
+                LabelsPaint = labelPaint,
+                NamePaint = labelPaint,
             }
         };
     }

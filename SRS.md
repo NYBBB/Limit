@@ -1,3 +1,5 @@
+老版策划文档：
+
 
 暂定核心框架: .NET 8.0 (C# 12)
 UI 框架: WinUI 3 (Windows App SDK 1.4+) —— 追求 Win11 原生 Mica/Acrylic 效果。
