@@ -29,6 +29,7 @@ public class DatabaseService
         _database = new SQLiteAsyncConnection(_dbPath);
         await _database.CreateTableAsync<UsageRecord>();
         await _database.CreateTableAsync<FatigueSnapshot>();
+        await _database.CreateTableAsync<HourlyUsageRecord>();
     }
 
     public async Task<List<UsageRecord>> GetUsageForDateAsync(DateTime date)
@@ -157,5 +158,67 @@ public class DatabaseService
         await _database.ExecuteAsync(
             "DELETE FROM FatigueSnapshots WHERE Date < ?", 
             beforeDate.Date);
+    }
+    
+    // ===== 每小时使用记录相关方法 =====
+    
+    /// <summary>
+    /// 更新每小时使用记录（当前小时的应用使用时长）
+    /// </summary>
+    public async Task UpdateHourlyUsageAsync(string appName, int secondsToAdd)
+    {
+        await InitAsync();
+        var now = DateTime.Now;
+        var today = now.Date;
+        var currentHour = now.Hour;
+        
+        // 查找当前小时的记录
+        var record = await _database.Table<HourlyUsageRecord>()
+            .Where(r => r.Date == today && r.Hour == currentHour && r.AppName == appName)
+            .FirstOrDefaultAsync();
+        
+        if (record == null)
+        {
+            record = new HourlyUsageRecord
+            {
+                Date = today,
+                Hour = currentHour,
+                AppName = appName,
+                DurationSeconds = secondsToAdd,
+                UpdatedAt = now
+            };
+            await _database.InsertAsync(record);
+        }
+        else
+        {
+            record.DurationSeconds += secondsToAdd;
+            record.UpdatedAt = now;
+            await _database.UpdateAsync(record);
+        }
+    }
+    
+    /// <summary>
+    /// 获取指定日期的每小时使用记录
+    /// </summary>
+    public async Task<List<HourlyUsageRecord>> GetHourlyUsageAsync(DateTime date)
+    {
+        await InitAsync();
+        return await _database.Table<HourlyUsageRecord>()
+            .Where(r => r.Date == date.Date)
+            .OrderBy(r => r.Hour)
+            .ToListAsync();
+    }
+    
+    /// <summary>
+    /// 获取指定日期某小时的 Top N 应用
+    /// </summary>
+    public async Task<List<HourlyUsageRecord>> GetTopAppsForHourAsync(DateTime date, int hour, int count = 5)
+    {
+        await InitAsync();
+        return await _database.Table<HourlyUsageRecord>()
+            .Where(r => r.Date == date.Date && r.Hour == hour)
+            .OrderByDescending(r => r.DurationSeconds)
+            .Take(count)
+            .ToListAsync();
     }
 }

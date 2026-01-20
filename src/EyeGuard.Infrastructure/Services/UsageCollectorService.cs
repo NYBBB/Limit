@@ -93,6 +93,9 @@ public class UsageCollectorService : IDisposable
                 pageTitle,
                 (int)duration
             ).Wait();
+            
+            // 同时更新每小时使用记录（用于分析页面柱状图）
+            _databaseService.UpdateHourlyUsageAsync(processName, (int)duration).Wait();
         }
         catch (Exception ex)
         {

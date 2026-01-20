@@ -217,4 +217,80 @@ public static class IconMapper
                name.Contains("arc") ||
                name.Contains("vivaldi");
     }
+    
+    /// <summary>
+    /// 获取友好的应用名称（用于显示）
+    /// </summary>
+    public static string GetFriendlyName(string appName)
+    {
+        // 应用名称映射表
+        var friendlyNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            // 浏览器
+            { "msedge", "Edge 浏览器" },
+            { "chrome", "Chrome 浏览器" },
+            { "firefox", "Firefox 浏览器" },
+            { "brave", "Brave 浏览器" },
+            { "arc", "Arc 浏览器" },
+            { "qqbrowser", "QQ浏览器" },
+            { "360se", "360浏览器" },
+            
+            // IDE
+            { "devenv", "Visual Studio" },
+            { "code", "VS Code" },
+            { "rider", "Rider" },
+            { "idea64", "IntelliJ IDEA" },
+            { "pycharm64", "PyCharm" },
+            { "webstorm64", "WebStorm" },
+            { "goland64", "GoLand" },
+            { "sublime_text", "Sublime Text" },
+            { "notepad++", "Notepad++" },
+            
+            // 终端
+            { "wt", "Windows Terminal" },
+            { "cmd", "命令提示符" },
+            { "powershell", "PowerShell" },
+            { "pwsh", "PowerShell Core" },
+            { "ubuntu", "Ubuntu (WSL)" },
+            
+            // 办公
+            { "winword", "Microsoft Word" },
+            { "excel", "Microsoft Excel" },
+            { "powerpnt", "PowerPoint" },
+            { "onenote", "OneNote" },
+            { "outlook", "Outlook" },
+            { "wps", "WPS Office" },
+            
+            // 通讯
+            { "wechat", "微信" },
+            { "qq", "QQ" },
+            { "tim", "TIM" },
+            { "dingtalk", "钉钉" },
+            { "lark", "飞书" },
+            { "feishu", "飞书" },
+            { "teams", "Teams" },
+            { "discord", "Discord" },
+            
+            // 媒体
+            { "potplayer", "PotPlayer" },
+            { "vlc", "VLC Player" },
+            { "spotify", "Spotify" },
+            { "cloudmusic", "网易云音乐" },
+            { "qqmusic", "QQ音乐" },
+            
+            // 其他
+            { "explorer", "文件资源管理器" },
+            { "steam", "Steam" },
+            { "unity editor", "Unity" },
+        };
+        
+        // 先尝试完全匹配
+        if (friendlyNames.TryGetValue(appName, out var friendlyName))
+            return friendlyName;
+        
+        // 如果没有映射，返回首字母大写的原名
+        return appName.Length > 0 
+            ? char.ToUpper(appName[0]) + appName.Substring(1) 
+            : appName;
+    }
 }

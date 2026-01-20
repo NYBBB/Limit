@@ -182,12 +182,8 @@ public partial class DashboardViewModel : ObservableObject
         // 监听设置变化
         _settingsService.SettingsChanged += (s, e) => ApplySettings();
         
-        // 初始化24小时数据点
+        // 初始化疲劳趋势数据（空列表，从数据库加载）
         _hourlyFatigueData = new ObservableCollection<ObservablePoint>();
-        for (int hour = 0; hour <= 24; hour++)
-        {
-            _hourlyFatigueData.Add(new ObservablePoint(hour, null));
-        }
         
         Series = new ISeries[]
         {
@@ -195,12 +191,12 @@ public partial class DashboardViewModel : ObservableObject
             {
                 Values = _hourlyFatigueData,
                 Name = "疲劳值",
-                Fill = new SolidColorPaint(new SKColor(138, 43, 226, 40)),
-                Stroke = new SolidColorPaint(new SKColor(138, 43, 226)) { StrokeThickness = 2 },
-                GeometrySize = 6,
-                GeometryFill = new SolidColorPaint(new SKColor(138, 43, 226)),
-                GeometryStroke = new SolidColorPaint(SKColors.White) { StrokeThickness = 2 },
-                LineSmoothness = 0.5,
+                Fill = new SolidColorPaint(new SKColor(138, 43, 226, 40)),  // 填充区域半透明紫色
+                Stroke = new SolidColorPaint(new SKColor(138, 43, 226)) { StrokeThickness = 3 },  // 线条粗细从2增加到3
+                GeometrySize = 12,  // 数据点大小从6增加到12
+                GeometryFill = new SolidColorPaint(new SKColor(138, 43, 226)),  // 紫色圆点填充
+                GeometryStroke = new SolidColorPaint(SKColors.White) { StrokeThickness = 2 },  // 白色边框
+                LineSmoothness = 0.3,  // 稍微降低平滑度，让线条更直接连接点
             }
         };
 
@@ -412,12 +408,6 @@ public partial class DashboardViewModel : ObservableObject
             _ => "未知状态"
         };
         
-        // 更新图表
-        var currentHour = DateTime.Now.Hour;
-        var minuteFraction = DateTime.Now.Minute / 60.0;
-        var hourPosition = currentHour + minuteFraction;
-        _hourlyFatigueData[currentHour] = new ObservablePoint(hourPosition, FatigueValue);
-        
         // ===== 疲劳快照保存逻辑 =====
         _secondsSinceLastSnapshot++;
         var snapshotInterval = _settingsService.Settings.FatigueSnapshotIntervalSeconds;
@@ -426,20 +416,6 @@ public partial class DashboardViewModel : ObservableObject
         {
             _secondsSinceLastSnapshot = 0;
             SaveFatigueSnapshotAsync();
-        }
-        
-        // 每隔 ChartIntervalMinutes 分钟记录一个图表点
-        if (DateTime.Now.Second == 0)
-        {
-            _minutesSinceLastChartPoint++;
-            var chartInterval = _settingsService.Settings.FatigueChartIntervalMinutes;
-            
-            if (_minutesSinceLastChartPoint >= chartInterval)
-            {
-                _minutesSinceLastChartPoint = 0;
-                // 图表点已经在上面更新了，这里只是记录日志
-                Debug.WriteLine($"[Chart] 记录疲劳趋势点: {FatigueValue}%");
-            }
         }
         
         // 每隔 DashboardRefreshInterval 秒更新一次数据库统计
@@ -483,21 +459,24 @@ public partial class DashboardViewModel : ObservableObject
                 }
             }
             
-            // 加载今日疲劳趋势数据
+            // 加载今日疲劳趋势数据并填充到图表
             var todaySnapshots = await _databaseService.GetFatigueSnapshotsAsync(DateTime.Today);
-            foreach (var snapshot in todaySnapshots)
+            
+            // 清空并重新填充图表数据
+            App.MainWindow.DispatcherQueue.TryEnqueue(() =>
             {
-                var hour = snapshot.RecordedAt.Hour;
-                var minuteFraction = snapshot.RecordedAt.Minute / 60.0;
-                var hourPosition = hour + minuteFraction;
-                
-                // 更新对应小时的数据点
-                if (hour < _hourlyFatigueData.Count)
+                _hourlyFatigueData.Clear();
+                foreach (var snapshot in todaySnapshots)
                 {
-                    _hourlyFatigueData[hour] = new ObservablePoint(hourPosition, snapshot.FatigueValue);
+                    var hour = snapshot.RecordedAt.Hour;
+                    var minuteFraction = snapshot.RecordedAt.Minute / 60.0;
+                    var hourPosition = hour + minuteFraction;
+                    
+                    _hourlyFatigueData.Add(new ObservablePoint(hourPosition, snapshot.FatigueValue));
                 }
-            }
-            Debug.WriteLine($"[LoadInitial] 加载了 {todaySnapshots.Count} 个疲劳快照");
+                
+                Debug.WriteLine($"[LoadInitial] 加载了 {todaySnapshots.Count} 个疲劳快照到图表");
+            });
         }
         catch (Exception ex)
         {
@@ -627,8 +606,21 @@ public partial class DashboardViewModel : ObservableObject
     {
         try
         {
-            await _databaseService.SaveFatigueSnapshotAsync(_activityManager.FatigueEngine.FatigueValue);
-            Debug.WriteLine($"[Snapshot] 保存疲劳快照: {_activityManager.FatigueEngine.FatigueValue:F2}%");
+            var fatigueValue = _activityManager.FatigueEngine.FatigueValue;
+            await _databaseService.SaveFatigueSnapshotAsync(fatigueValue);
+            
+            // 同步更新图表
+            var now = DateTime.Now;
+            var hour = now.Hour;
+            var minuteFraction = now.Minute / 60.0;
+            var hourPosition = hour + minuteFraction;
+            
+            App.MainWindow.DispatcherQueue.TryEnqueue(() =>
+            {
+                _hourlyFatigueData.Add(new ObservablePoint(hourPosition, fatigueValue));
+            });
+            
+            Debug.WriteLine($"[Snapshot] 保存疲劳快照: {fatigueValue:F2}% 到数据库和图表");
         }
         catch (Exception ex)
         {
