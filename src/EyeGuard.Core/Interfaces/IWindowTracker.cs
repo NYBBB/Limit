@@ -6,10 +6,12 @@ namespace EyeGuard.Core.Interfaces;
 /// <param name="ProcessName">进程名称 (如 chrome.exe)。</param>
 /// <param name="WindowTitle">窗口原始标题。</param>
 /// <param name="SanitizedTitle">敏感词脱敏后的标题。</param>
+/// <param name="Url">浏览器 URL（仅浏览器有效，通过 UI Automation 获取）。</param>
 public record WindowInfo(
     string ProcessName, 
     string WindowTitle, 
-    string SanitizedTitle
+    string SanitizedTitle,
+    string? Url = null
 );
 
 /// <summary>

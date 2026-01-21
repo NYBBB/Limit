@@ -30,7 +30,26 @@ public sealed partial class SettingsPage : Page
         ChartIntervalSlider.Value = settings.FatigueChartIntervalMinutes;
         RefreshIntervalSlider.Value = settings.DashboardRefreshIntervalSeconds;
         
+        // Phase C: 加载自启动状态
+        AutoStartToggle.IsOn = UI.Services.AutoStartService.IsEnabled();
+        AutoStartToggle.Toggled += AutoStartToggle_Toggled;
+        
         Debug.WriteLine("[SettingsPage] 已加载设置");
+    }
+    
+    /// <summary>
+    /// Phase C: 自启动开关切换事件
+    /// </summary>
+    private void AutoStartToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (AutoStartToggle.IsOn)
+        {
+            UI.Services.AutoStartService.Enable();
+        }
+        else
+        {
+            UI.Services.AutoStartService.Disable();
+        }
     }
     
     private void SnapshotIntervalSlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)

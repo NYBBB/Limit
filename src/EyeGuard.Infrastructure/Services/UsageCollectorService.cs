@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using EyeGuard.Core.Interfaces;
+using EyeGuard.Infrastructure.Monitors;
 
 namespace EyeGuard.Infrastructure.Services;
 
@@ -9,20 +10,26 @@ public class UsageCollectorService : IDisposable
 {
     private readonly IWindowTracker _windowTracker;
     private readonly DatabaseService _databaseService;
+    private readonly GlobalInputMonitor _inputMonitor; // 用于检测空闲状态
     private System.Threading.Timer? _timer;
     private WindowInfo? _currentWindow;
     private DateTime _lastTick;
+    
+    // 空闲阈值（秒）- 超过此时间认为用户不在使用电脑
+    private const int IdleThresholdSeconds = 60;
 
     public UsageCollectorService(IWindowTracker windowTracker, DatabaseService databaseService)
     {
         _windowTracker = windowTracker;
         _databaseService = databaseService;
+        _inputMonitor = new GlobalInputMonitor(); // 初始化输入监测器
         _lastTick = DateTime.Now;
     }
 
     public void Start()
     {
         _windowTracker.ActiveWindowChanged += OnActiveWindowChanged;
+        _inputMonitor.Start(); // 启动输入监测
         // 每 10 秒批量写入/检查一次数据库
         _timer = new System.Threading.Timer(OnTick, null, 10000, 10000); 
     }
@@ -30,6 +37,7 @@ public class UsageCollectorService : IDisposable
     public void Stop()
     {
         _timer?.Dispose();
+        _inputMonitor.Stop(); // 停止输入监测
         _windowTracker.ActiveWindowChanged -= OnActiveWindowChanged;
         
         // 保存最后的数据
@@ -48,6 +56,9 @@ public class UsageCollectorService : IDisposable
 
     private void OnTick(object? state)
     {
+        // 检查空闲状态
+        _inputMonitor.CheckIdleState();
+        
         SaveCurrentUsage();
         _lastTick = DateTime.Now; // 重置最后时间
     }
@@ -55,6 +66,14 @@ public class UsageCollectorService : IDisposable
     private void SaveCurrentUsage()
     {
         if (_currentWindow == null) return;
+        
+        // ===== Limit 2.0: 空闲检测 - 只记录用户活跃时的使用时长 =====
+        if (_inputMonitor.IdleSeconds >= IdleThresholdSeconds)
+        {
+            // 用户空闲/离开，不记录使用时长
+            Debug.WriteLine($"[UsageCollector] User idle ({_inputMonitor.IdleSeconds:F0}s), skipping usage record");
+            return;
+        }
         
         var now = DateTime.Now;
         var duration = (now - _lastTick).TotalSeconds;

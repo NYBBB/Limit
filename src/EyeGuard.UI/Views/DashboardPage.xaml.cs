@@ -93,4 +93,32 @@ public sealed partial class DashboardPage : Page
         
         overlayWindow.Activate();
     }
+    
+    /// <summary>
+    /// 干预卡片"休息一下"按钮
+    /// </summary>
+    private void InterventionActionButton_Click(object sender, RoutedEventArgs e)
+    {
+        // 触发休息弹窗
+        var overlayWindow = new BreakOverlayWindow
+        {
+            BreakDurationSeconds = 60, // 1分钟休息
+            FatigueValue = ViewModel.FatigueValue
+        };
+        
+        overlayWindow.BreakCompleted += (s, action) =>
+        {
+            System.Diagnostics.Debug.WriteLine($"[Intervention] User action: {action}");
+        };
+        
+        overlayWindow.Activate();
+    }
+    
+    /// <summary>
+    /// 调试滑块 - 手动设置疲劳值
+    /// </summary>
+    private void DebugFatigueSlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        ViewModel.SetDebugFatigueValue(e.NewValue);
+    }
 }

@@ -24,10 +24,7 @@ public class TrayIconService : IDisposable
         _taskbarIcon = new TaskbarIcon();
         
         // 设置工具提示
-        _taskbarIcon.ToolTipText = "EyeGuard - 眼睛守护";
-        
-        // 左键点击显示窗口
-        _taskbarIcon.LeftClickCommand = new RelayCommand(() => ShowRequested?.Invoke(this, EventArgs.Empty));
+        _taskbarIcon.ToolTipText = "Limit - 疲劳管理助手";
         
         // 创建右键菜单
         var menuFlyout = new MenuFlyout();
@@ -90,27 +87,4 @@ public class TrayIconService : IDisposable
     {
         Dispose();
     }
-}
-
-/// <summary>
-/// 简单的命令实现。
-/// </summary>
-public class RelayCommand : System.Windows.Input.ICommand
-{
-    private readonly Action _execute;
-    private readonly Func<bool>? _canExecute;
-
-    public RelayCommand(Action execute, Func<bool>? canExecute = null)
-    {
-        _execute = execute ?? throw new ArgumentNullException(nameof(execute));
-        _canExecute = canExecute;
-    }
-
-    public event EventHandler? CanExecuteChanged;
-
-    public bool CanExecute(object? parameter) => _canExecute?.Invoke() ?? true;
-
-    public void Execute(object? parameter) => _execute();
-
-    public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 }

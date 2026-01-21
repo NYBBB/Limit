@@ -105,39 +105,26 @@
                     </StackPanel>
                 </Border>
 
-                <!-- 第三个卡片：根据模式切换 -->
+                <!-- 精力倒计时卡片 (Limit 2.0) -->
                 <Border Grid.Column="2"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1" CornerRadius="8" Padding="20"
                         Margin="8,0,8,0">
-                    <Grid>
-                        <!-- 智能模式：休息建议 -->
-                        <StackPanel Visibility="{x:Bind ViewModel.IsSmartMode, Mode=OneWay}">
-                            <TextBlock Text="休息建议" 
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="⚡" FontSize="12"/>
+                            <TextBlock Text="精力预测" 
                                        FontSize="12"
                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                            <TextBlock Text="{x:Bind ViewModel.RecommendedBreakTime, Mode=OneWay}" 
-                                       FontSize="20" FontWeight="Bold"
-                                       Margin="0,8,0,0"
-                                       TextWrapping="Wrap"/>
                         </StackPanel>
-                        
-                        <!-- 简单模式：下次休息 -->
-                        <StackPanel Visibility="{x:Bind ViewModel.IsSmartMode, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}">
-                            <TextBlock Text="下次休息" 
-                                       FontSize="12"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                <TextBlock Text="{x:Bind ViewModel.NextBreakMinutes, Mode=OneWay}" 
-                                           FontSize="32" FontWeight="Bold"/>
-                                <TextBlock Text="分钟后" 
-                                           FontSize="14" VerticalAlignment="Bottom"
-                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                           Margin="2,0,0,4"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </Grid>
+                        <TextBlock Text="{x:Bind ViewModel.BurnoutCountdownText, Mode=OneWay}" 
+                                   FontSize="24" FontWeight="Bold"
+                                   Margin="0,8,0,0"/>
+                        <TextBlock Text="{x:Bind ViewModel.BurnoutCountdownSubtitle, Mode=OneWay}" 
+                                   FontSize="12"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
                 </Border>
 
                 <!-- 最长连续工作时间卡片 -->
@@ -161,6 +148,83 @@
                     </StackPanel>
                 </Border>
             </Grid>
+            
+            <!-- 阶段 5: 干预提醒卡片 - 只在需要干预时显示 -->
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{x:Bind ViewModel.InterventionBorderColor, Mode=OneWay}"
+                    BorderThickness="2" CornerRadius="8" Padding="20"
+                    Visibility="{x:Bind ViewModel.ShowInterventionCard, Mode=OneWay}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel>
+                        <TextBlock Text="{x:Bind ViewModel.InterventionMessage, Mode=OneWay}" 
+                                   FontSize="14" FontWeight="SemiBold"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                    
+                    <Button Grid.Column="1" 
+                            Content="休息一下" 
+                            Style="{StaticResource AccentButtonStyle}"
+                            Click="InterventionActionButton_Click"/>
+                </Grid>
+            </Border>
+            
+            <!-- 精力预测建议卡片 (Limit 2.0) - 只在有建议时显示 -->
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="#8A2BE2"
+                    BorderThickness="2" CornerRadius="8" Padding="20"
+                    Visibility="{x:Bind ViewModel.HasExtensionSuggestion, Mode=OneWay}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="💡" FontSize="16"/>
+                            <TextBlock Text="延长精力建议" FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <TextBlock Text="{x:Bind ViewModel.ExtensionSuggestion, Mode=OneWay}" 
+                                   Margin="0,8,0,0"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            
+            <!-- 休息任务卡片 (Limit 2.0) - 只在有任务时显示 -->
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="#FF6D00"
+                    BorderThickness="2" CornerRadius="8" Padding="20"
+                    Visibility="{x:Bind ViewModel.HasBreakTask, Mode=OneWay}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel>
+                        <TextBlock Text="{x:Bind ViewModel.BreakTaskName, Mode=OneWay}" 
+                                   FontSize="16" FontWeight="SemiBold"/>
+                        <TextBlock Text="{x:Bind ViewModel.BreakTaskDescription, Mode=OneWay}" 
+                                   Margin="0,4,0,0"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        <TextBlock Text="{x:Bind ViewModel.BreakTaskReason, Mode=OneWay}" 
+                                   FontSize="12" Margin="0,8,0,0"
+                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Button Content="已完成" Command="{x:Bind ViewModel.CompleteBreakTaskCommand}" Style="{StaticResource AccentButtonStyle}"/>
+                        <Button Content="忽略" Command="{x:Bind ViewModel.SkipBreakTaskCommand}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
 
             <!-- 今日使用图表区 -->
             <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -336,7 +400,8 @@
                         <lvc:CartesianChart Series="{x:Bind ViewModel.Series, Mode=OneWay}"
                                             XAxes="{x:Bind ViewModel.XAxes, Mode=OneWay}"
                                             YAxes="{x:Bind ViewModel.YAxes, Mode=OneWay}"
-                                            TooltipPosition="Top">
+                                            TooltipPosition="Top"
+                                            TooltipTextPaint="{x:Bind ViewModel.LegendPaint}">
                         </lvc:CartesianChart>
                     </Border>
                 </StackPanel>
@@ -405,8 +470,8 @@
                         <TextBlock Grid.Row="3" Grid.Column="0" Text="空闲秒数:" FontSize="12" Foreground="Gray"/>
                         <TextBlock Grid.Row="3" Grid.Column="1" Text="{x:Bind ViewModel.IdleSecondsText, Mode=OneWay}" FontSize="12"/>
                         
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text="音频峰值:" FontSize="12" Foreground="Gray"/>
-                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{x:Bind ViewModel.AudioPeakText, Mode=OneWay}" FontSize="12"/>
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="疲劳斜率:" FontSize="12" Foreground="Gray"/>
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{x:Bind ViewModel.FatigueSlopeText, Mode=OneWay}" FontSize="12" Foreground="#8A2BE2"/>
                         
                         <!-- 右列 -->
                         <TextBlock Grid.Row="0" Grid.Column="2" Text="音频播放:" FontSize="12" Foreground="Gray"/>
@@ -418,12 +483,25 @@
                         <TextBlock Grid.Row="2" Grid.Column="2" Text="连续工作:" FontSize="12" Foreground="Gray"/>
                         <TextBlock Grid.Row="2" Grid.Column="3" Text="{x:Bind ViewModel.CurrentSessionText, Mode=OneWay}" FontSize="12"/>
                         
-                        <TextBlock Grid.Row="3" Grid.Column="2" Text="恢复预估:" FontSize="12" Foreground="Gray"/>
-                        <TextBlock Grid.Row="3" Grid.Column="3" Text="{x:Bind ViewModel.RecoveryEstimate, Mode=OneWay}" FontSize="12"/>
+                        <TextBlock Grid.Row="3" Grid.Column="2" Text="上下文:" FontSize="12" Foreground="Gray"/>
+                        <TextBlock Grid.Row="3" Grid.Column="3" Text="{x:Bind ViewModel.CurrentContextName, Mode=OneWay}" FontSize="12" Foreground="#8A2BE2"/>
                         
                         <TextBlock Grid.Row="4" Grid.Column="2" Text="休息建议:" FontSize="12" Foreground="Gray"/>
                         <TextBlock Grid.Row="4" Grid.Column="3" Text="{x:Bind ViewModel.BreakSuggestion, Mode=OneWay}" FontSize="12" Foreground="#8A2BE2"/>
                     </Grid>
+                    
+                    <!-- 调试用疲劳值滑块 -->
+                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,12,0,0">
+                        <TextBlock Text="手动设置疲劳值:" FontSize="12" Foreground="Gray" VerticalAlignment="Center"/>
+                        <Slider x:Name="DebugFatigueSlider" 
+                                Width="200" 
+                                Minimum="0" Maximum="100" 
+                                Value="{x:Bind ViewModel.FatigueValue, Mode=OneWay}"
+                                ValueChanged="DebugFatigueSlider_ValueChanged"/>
+                        <TextBlock Text="{x:Bind ViewModel.FatigueValue, Mode=OneWay}" 
+                                   FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <TextBlock Text="%" FontSize="12" Foreground="Gray" VerticalAlignment="Center"/>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 

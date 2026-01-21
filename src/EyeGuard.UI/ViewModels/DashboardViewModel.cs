@@ -11,6 +11,8 @@ using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
 using EyeGuard.Core.Models;
+using EyeGuard.Core.Enums;
+using EyeGuard.Core.Interfaces;
 using EyeGuard.Infrastructure.Services;
 using EyeGuard.Core.Entities;
 
@@ -29,6 +31,10 @@ public partial class DashboardViewModel : ObservableObject
     private readonly UserActivityManager _activityManager;
     private readonly SettingsService _settingsService;
     private readonly DatabaseService _databaseService;
+    private readonly ForecastService _forecastService;
+    private readonly BreakTaskService _breakTaskService;
+    private readonly IWindowTracker _windowTracker;
+    private readonly InterventionPolicy _interventionPolicy;
     private int _secondsToNextBreak = 15 * 60;
     private const int TopAppsCount = 5; // 默认显示前5个应用
     
@@ -151,12 +157,131 @@ public partial class DashboardViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     private bool _isSmartMode = true;
+    
+    // ===== Limit 2.0: 精力预测属性 =====
+    
+    /// <summary>
+    /// 枯竭倒计时文本 (如 "42 分钟")
+    /// </summary>
+    [ObservableProperty]
+    private string _burnoutCountdownText = "> 2 小时";
+    
+    /// <summary>
+    /// 倒计时副标题 (如 "后进入低效区")
+    /// </summary>
+    [ObservableProperty]
+    private string _burnoutCountdownSubtitle = "精力充沛";
+    
+    /// <summary>
+    /// 当前疲劳状态
+    /// </summary>
+    [ObservableProperty]
+    private FatigueState _currentFatigueState = FatigueState.Fresh;
+    
+    /// <summary>
+    /// 疲劳状态对应的颜色
+    /// </summary>
+    [ObservableProperty]
+    private string _fatigueStateColor = "#00C853";
+    
+    /// <summary>
+    /// 延长方案建议 (如 "切换到媒体模式可延长至 1小时15分")
+    /// </summary>
+    [ObservableProperty]
+    private string? _extensionSuggestion;
+    
+    /// <summary>
+    /// 是否显示延长建议
+    /// </summary>
+    public bool HasExtensionSuggestion => !string.IsNullOrEmpty(ExtensionSuggestion);
+    
+    /// <summary>
+    /// 疲劳变化斜率 (%/分钟)
+    /// </summary>
+    [ObservableProperty]
+    private string _fatigueSlopeText = "0.0%/min";
+    
+    // ===== Limit 2.0: 休息任务属性 =====
+    
+    /// <summary>
+    /// 是否有待处理的休息任务
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasBreakTask = false;
+    
+    /// <summary>
+    /// 当前休息任务名称
+    /// </summary>
+    [ObservableProperty]
+    private string _breakTaskName = "";
+    
+    /// <summary>
+    /// 当前休息任务描述
+    /// </summary>
+    [ObservableProperty]
+    private string _breakTaskDescription = "";
+    
+    /// <summary>
+    /// 当前休息任务时长（秒）
+    /// </summary>
+    [ObservableProperty]
+    private int _breakTaskDuration = 0;
+    
+    /// <summary>
+    /// 当前休息任务触发原因
+    /// </summary>
+    [ObservableProperty]
+    private string _breakTaskReason = "";
 
     // 图表数据 - 24小时时间轴
     public ISeries[] Series { get; set; }
     public ICartesianAxis[] XAxes { get; set; }
     public ICartesianAxis[] YAxes { get; set; }
     private readonly ObservableCollection<ObservablePoint> _hourlyFatigueData;
+    
+    // ===== Limit 2.0: 上下文分类 =====
+    
+    /// <summary>
+    /// 当前上下文状态
+    /// </summary>
+    [ObservableProperty]
+    private ContextState _currentContext = ContextState.Other;
+    
+    /// <summary>
+    /// 当前上下文名称
+    /// </summary>
+    [ObservableProperty]
+    private string _currentContextName = "其他";
+    
+    // ===== 阶段 5：干预系统属性 =====
+    
+    /// <summary>
+    /// 当前干预级别
+    /// </summary>
+    [ObservableProperty]
+    private InterventionLevel _currentInterventionLevel = InterventionLevel.None;
+    
+    /// <summary>
+    /// 干预消息
+    /// </summary>
+    [ObservableProperty]
+    private string _interventionMessage = "";
+    
+    /// <summary>
+    /// 是否显示干预卡片
+    /// </summary>
+    public bool ShowInterventionCard => CurrentInterventionLevel >= InterventionLevel.Suggestion;
+    
+    /// <summary>
+    /// 干预卡片边框颜色
+    /// </summary>
+    public string InterventionBorderColor => CurrentInterventionLevel switch
+    {
+        InterventionLevel.Nudge => "#FFC107",      // 黄色
+        InterventionLevel.Suggestion => "#FF9800", // 橙色
+        InterventionLevel.Intervention => "#F44336", // 红色
+        _ => "Transparent"
+    };
 
     private DashboardViewModel()
     {
@@ -168,6 +293,21 @@ public partial class DashboardViewModel : ObservableObject
         
         // 初始化用户活动管理器
         _activityManager = new UserActivityManager();
+        
+        // 初始化预测服务
+        _forecastService = new ForecastService(_activityManager.FatigueEngine);
+        
+        // 初始化休息任务服务
+        _breakTaskService = new BreakTaskService(_activityManager.FatigueEngine);
+        _breakTaskService.TaskGenerated += OnBreakTaskGenerated;
+        _breakTaskService.TaskCompleted += OnBreakTaskCompleted;
+        _breakTaskService.ResetSessionTimer = () => _activityManager.ResetCurrentSession();
+        
+        // 获取窗口追踪器（用于上下文分类）
+        _windowTracker = App.Services.GetRequiredService<IWindowTracker>();
+        
+        // 初始化干预策略服务 (Phase 5)
+        _interventionPolicy = new InterventionPolicy();
         
         // 异步加载初始数据
         LoadInitialDataAsync();
@@ -263,6 +403,9 @@ public partial class DashboardViewModel : ObservableObject
             _timer.Interval = TimeSpan.FromSeconds(1);
             _timer.Tick += OnTimerTick;
             Debug.WriteLine("Timer initialized");
+            
+            // 自动开始监测（必须在定时器初始化后调用）
+            StartSimulation();
         }
     }
 
@@ -289,6 +432,16 @@ public partial class DashboardViewModel : ObservableObject
             _timer?.Stop();
             Debug.WriteLine("Monitoring stopped");
         }
+    }
+    
+    /// <summary>
+    /// 调试用：手动设置疲劳值（测试干预系统）
+    /// </summary>
+    public void SetDebugFatigueValue(double value)
+    {
+        _activityManager.FatigueEngine.SetFatigueValue(value);
+        FatigueValue = (int)Math.Round(value);
+        Debug.WriteLine($"[Debug] Fatigue value set to: {value:F1}%");
     }
 
     [RelayCommand]
@@ -324,6 +477,30 @@ public partial class DashboardViewModel : ObservableObject
     private void OnTimerTick(object? sender, object e)
     {
         if (!IsMonitoring) return;
+        
+        // ===== Limit 2.0: 上下文分类 =====
+        var activeWindow = _windowTracker.GetActiveWindow();
+        if (activeWindow != null)
+        {
+            // 识别网站（如果是浏览器）
+            string? websiteName = null;
+            if (WebsiteRecognizer.IsBrowserProcess(activeWindow.ProcessName))
+            {
+                WebsiteRecognizer.TryRecognizeWebsite(activeWindow.WindowTitle, out websiteName);
+            }
+            
+            // 分类上下文
+            CurrentContext = ContextClassifier.Classify(
+                activeWindow.ProcessName, 
+                websiteName, 
+                activeWindow.WindowTitle,
+                activeWindow.Url  // Limit 2.0: URL 优先分类
+            );
+            CurrentContextName = ContextClassifier.GetContextName(CurrentContext);
+            
+            // 更新疲劳引擎的负荷权重
+            _activityManager.FatigueEngine.LoadWeight = ContextClassifier.GetLoadWeight(CurrentContext);
+        }
 
         // 更新活动管理器
         _activityManager.Tick();
@@ -336,6 +513,32 @@ public partial class DashboardViewModel : ObservableObject
         FatigueLevel = fatigue.GetFatigueLevel();
         UserState = _activityManager.GetStateDescription();
         IsAudioPlaying = _activityManager.AudioDetector.IsAudioPlaying;
+        
+        // ===== Limit 2.0: 更新预测服务和 UI =====
+        _forecastService.Update();
+        BurnoutCountdownText = _forecastService.GetCountdownText();
+        BurnoutCountdownSubtitle = _forecastService.GetCountdownSubtitle();
+        CurrentFatigueState = fatigue.CurrentFatigueState;
+        FatigueStateColor = fatigue.GetFatigueStateColor();
+        ExtensionSuggestion = _forecastService.GetExtensionSuggestionText();
+        OnPropertyChanged(nameof(HasExtensionSuggestion));
+        FatigueSlopeText = $"{fatigue.FatigueSlope:F2}%/min";
+        
+        // ===== Phase 5: 干预系统评估 =====
+        var intervention = _interventionPolicy.Evaluate(fatigue.FatigueValue, CurrentContext);
+        if (intervention.ShouldShow)
+        {
+            CurrentInterventionLevel = intervention.Level;
+            InterventionMessage = intervention.Message;
+            OnPropertyChanged(nameof(ShowInterventionCard));
+            OnPropertyChanged(nameof(InterventionBorderColor));
+        }
+        
+        // ===== Limit 2.0: 久坐保护检查 =====
+        if (state == UserActivityState.Active)
+        {
+            _breakTaskService.CheckMobilityTaskTrigger(_activityManager.CurrentSessionSeconds);
+        }
         
         // 更新时长
         int totalSeconds = _activityManager.TodayActiveSeconds;
@@ -417,9 +620,10 @@ public partial class DashboardViewModel : ObservableObject
             _ => "未知状态"
         };
         
-        // ===== 疲劳快照保存逻辑 =====
+        // ===== 疲劳快照保存逻辑（用于图表显示）=====
         _secondsSinceLastSnapshot++;
-        var snapshotInterval = _settingsService.Settings.FatigueSnapshotIntervalSeconds;
+        // 使用图表间隔设置（分钟转秒）
+        var snapshotInterval = _settingsService.Settings.FatigueChartIntervalMinutes * 60;
         
         if (_secondsSinceLastSnapshot >= snapshotInterval)
         {
@@ -635,5 +839,61 @@ public partial class DashboardViewModel : ObservableObject
         {
             Debug.WriteLine($"Error saving fatigue snapshot: {ex.Message}");
         }
+    }
+    
+    // ===== Limit 2.0: 休息任务事件处理 =====
+    
+    private void OnBreakTaskGenerated(object? sender, BreakTaskRecord task)
+    {
+        App.MainWindow.DispatcherQueue.TryEnqueue(() =>
+        {
+            HasBreakTask = true;
+            BreakTaskName = BreakTaskService.GetTaskTypeName(task.TaskType);
+            BreakTaskDescription = BreakTaskService.GetTaskTypeDescription(task.TaskType);
+            BreakTaskDuration = task.DurationSeconds;
+            BreakTaskReason = task.TriggerReason;
+            
+            Debug.WriteLine($"[BreakTask] 生成任务: {BreakTaskName}, 原因: {BreakTaskReason}");
+        });
+    }
+    
+    private void OnBreakTaskCompleted(object? sender, BreakTaskRecord task)
+    {
+        App.MainWindow.DispatcherQueue.TryEnqueue(() =>
+        {
+            HasBreakTask = false;
+            BreakTaskName = "";
+            BreakTaskDescription = "";
+            BreakTaskDuration = 0;
+            BreakTaskReason = "";
+            
+            Debug.WriteLine($"[BreakTask] 任务完成: {task.Result}, 恢复加成: {task.RecoveryCredit:F1}");
+        });
+    }
+    
+    /// <summary>
+    /// 完成休息任务命令 - 用户自主标记已完成（信任用户）
+    /// </summary>
+    [RelayCommand]
+    private void CompleteBreakTask()
+    {
+        var currentTask = _breakTaskService.CurrentTask;
+        if (currentTask == null) return;
+        
+        var recoveryCredit = _breakTaskService.SettleTask(currentTask, BreakTaskResult.Completed);
+        
+        Debug.WriteLine($"[BreakTask] 用户完成任务，恢复值: -{recoveryCredit:F1}%");
+    }
+    
+    /// <summary>
+    /// 跳过休息任务命令
+    /// </summary>
+    [RelayCommand]
+    private void SkipBreakTask()
+    {
+        var currentTask = _breakTaskService.CurrentTask;
+        if (currentTask == null) return;
+        
+        _breakTaskService.SettleTask(currentTask, BreakTaskResult.Skipped);
     }
 }

@@ -195,6 +195,15 @@ public class UserActivityManager : IDisposable
         LongestSessionSeconds = 0;
         CurrentState = UserActivityState.Idle;
     }
+    
+    /// <summary>
+    /// 仅重置当前连续工作时长（用于休息任务完成后）
+    /// </summary>
+    public void ResetCurrentSession()
+    {
+        CurrentSessionSeconds = 0;
+        Debug.WriteLine("[UserActivityManager] CurrentSession reset");
+    }
 
     /// <summary>
     /// 获取状态描述文本。

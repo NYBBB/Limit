@@ -5,8 +5,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Background="Transparent">
 
-    <ScrollViewer Padding="32">
-        <StackPanel Spacing="24" MaxWidth="600">
+    <ScrollViewer Padding="32" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="24" MaxWidth="1200" HorizontalAlignment="Center">
             
             <TextBlock Text="设置" FontSize="28" FontWeight="SemiBold"/>
             

@@ -27,6 +27,16 @@ public sealed partial class BreakOverlayWindow : Window
     public int FatigueValue { get; set; } = 80;
     
     /// <summary>
+    /// 休息任务名称 (Limit 2.0)
+    /// </summary>
+    public string BreakTaskName { get; set; } = "";
+    
+    /// <summary>
+    /// 休息任务描述 (Limit 2.0)
+    /// </summary>
+    public string BreakTaskDescription { get; set; } = "";
+    
+    /// <summary>
     /// 用户选择的操作。
     /// </summary>
     public BreakAction UserAction { get; private set; } = BreakAction.None;

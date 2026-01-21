@@ -30,6 +30,7 @@ public class DatabaseService
         await _database.CreateTableAsync<UsageRecord>();
         await _database.CreateTableAsync<FatigueSnapshot>();
         await _database.CreateTableAsync<HourlyUsageRecord>();
+        await _database.CreateTableAsync<BreakTaskRecord>();
     }
 
     public async Task<List<UsageRecord>> GetUsageForDateAsync(DateTime date)

@@ -6,6 +6,8 @@ using Microsoft.UI.Windowing;
 using WinRT.Interop;
 using CommunityToolkit.Mvvm.Input;
 using EyeGuard.UI.ViewModels;
+using EyeGuard.UI.Services;
+using System.Diagnostics;
 
 namespace EyeGuard.UI;
 
@@ -16,6 +18,9 @@ namespace EyeGuard.UI;
 public sealed partial class MainWindow : Window
 {
     private AppWindow? _appWindow;
+    private readonly TrayIconService _trayIconService;
+    private readonly ToastNotificationService _toastService;
+    private bool _reallyClose = false;
     
     public RelayCommand ShowWindowCommand { get; }
 
@@ -27,7 +32,7 @@ public sealed partial class MainWindow : Window
         ShowWindowCommand = new RelayCommand(() => this.Activate());
         
         // 设置窗口标题
-        Title = "EyeGuard";
+        Title = "Limit";
         
         // 获取 AppWindow 并设置窗口大小
         SetupWindow();
@@ -35,8 +40,24 @@ public sealed partial class MainWindow : Window
         // 尝试启用 Mica 背景材质
         TrySetMicaBackdrop();
         
+        // Phase C: 初始化托盘图标
+        _trayIconService = new TrayIconService();
+        _trayIconService.ShowRequested += (s, e) => this.Activate();
+        _trayIconService.ExitRequested += (s, e) => ExitApplication();
+        _trayIconService.StartMonitoringRequested += (s, e) => StartMonitoring_Click(this, new RoutedEventArgs());
+        _trayIconService.Initialize();
+        
+        // Phase C: 初始化 Toast 通知
+        _toastService = new ToastNotificationService();
+        _toastService.Initialize();
+        
+        // 监听窗口关闭事件
+        this.Closed += MainWindow_Closed;
+        
         // 默认导航到仪表盘页面
         ContentFrame.Navigate(typeof(Views.DashboardPage));
+        
+        Debug.WriteLine("[MainWindow] Initialized with tray and toast services");
     }
 
     /// <summary>
@@ -137,6 +158,56 @@ public sealed partial class MainWindow : Window
 
     private void ExitApp_Click(object sender, RoutedEventArgs e)
     {
+        ExitApplication();
+    }
+    
+    /// <summary>
+    /// 真正退出应用程序
+    /// </summary>
+    private void ExitApplication()
+    {
+        _reallyClose = true;
+        _trayIconService?.Dispose();
+        _toastService?.Uninitialize();
         Application.Current.Exit();
     }
+    
+    /// <summary>
+    /// 窗口关闭事件 - 最小化到托盘而非真正关闭
+    /// </summary>
+    private void MainWindow_Closed(object sender, WindowEventArgs args)
+    {
+        if (!_reallyClose)
+        {
+            args.Handled = true;
+            this.HideToTray();
+            _toastService?.ShowInterventionNotification(0, "Limit 已最小化到托盘，继续在后台监测");
+            Debug.WriteLine("[MainWindow] Minimized to tray");
+        }
+    }
+    
+    /// <summary>
+    /// 显示窗口（从托盘恢复）
+    /// </summary>
+    public void ShowFromTray()
+    {
+        this.Activate();
+    }
+    
+    /// <summary>
+    /// 隐藏窗口（最小化到托盘）
+    /// </summary>
+    public void HideToTray()
+    {
+        // WinUI 3 没有 Hide 方法,用最小化替代
+        if (_appWindow != null)
+        {
+            _appWindow.Hide();
+        }
+    }
+    
+    /// <summary>
+    /// 获取 Toast 服务（供其他组件使用）
+    /// </summary>
+    public ToastNotificationService GetToastService() => _toastService;
 }
