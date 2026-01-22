@@ -11,110 +11,120 @@
             <SolidColorBrush Color="#E6000000"/>
         </Grid.Background>
         
-        <!-- 中央内容区 -->
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="32">
+        <!-- Phase 5: Overlay 3.0 中央内容区 -->
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="24" MaxWidth="500">
             
             <!-- 大图标 -->
-            <FontIcon Glyph="&#xE9CE;" FontSize="80" Foreground="#8A2BE2"
+            <FontIcon Glyph="&#xE9CE;" FontSize="72" Foreground="#8A2BE2"
                       HorizontalAlignment="Center"/>
             
-            <!-- 标题 -->
+            <!-- 主标题：Diminishing Returns -->
             <TextBlock x:Name="TitleText" 
-                       Text="该休息了！" 
-                       FontSize="48" FontWeight="Bold"
+                       Text="Diminishing Returns" 
+                       FontSize="42" FontWeight="Bold"
                        Foreground="White"
                        HorizontalAlignment="Center"/>
             
-            <!-- 副标题/建议 -->
+            <!-- 副标题 -->
             <TextBlock x:Name="SubtitleText"
-                       Text="您的眼睛需要休息一下"
-                       FontSize="20"
+                       Text="继续工作的效率正在急剧下降"
+                       FontSize="18"
                        Foreground="#AAAAAA"
-                       HorizontalAlignment="Center"/>
-            
-            <!-- 状态文本 -->
-            <TextBlock x:Name="StatusText"
-                       Text=""
-                       FontSize="16"
-                       Foreground="#8A2BE2"
                        HorizontalAlignment="Center"
-                       Margin="0,8,0,0"/>
+                       TextWrapping="Wrap"
+                       TextAlignment="Center"/>
             
-            <!-- 提示文本 -->
-            <TextBlock x:Name="TipText"
-                       Text=""
-                       FontSize="14"
-                       Foreground="#888888"
-                       HorizontalAlignment="Center"/>
-            
-            <!-- 倒计时显示 -->
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8" Margin="0,16,0,0">
-                <TextBlock Text="剩余时间"
-                           FontSize="20"
-                           Foreground="#888888"
-                           VerticalAlignment="Center"/>
-                <TextBlock x:Name="CountdownText"
-                           Text="5:00"
-                           FontSize="56" FontWeight="Light"
-                           Foreground="#8A2BE2"
-                           VerticalAlignment="Center"/>
-            </StackPanel>
+            <!-- 科学说明 -->
+            <Border Background="#22FFFFFF" CornerRadius="12" Padding="20,16" Margin="0,8,0,0">
+                <TextBlock Text="📊 研究表明，持续高强度工作后，认知能力和创造力会显著下降。短暂休息可以帮助恢复专注力，提高整体工作效率。"
+                           FontSize="14"
+                           Foreground="#CCCCCC"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"/>
+            </Border>
             
             <!-- 疲劳值显示 -->
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="16">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="16" Margin="0,8,0,0">
                 <TextBlock Text="当前疲劳度:"
                            FontSize="16"
                            Foreground="#888888"
                            VerticalAlignment="Center"/>
                 <ProgressBar x:Name="FatigueProgressBar"
                              Value="80" Maximum="100"
-                             Width="200" Height="8"
-                             VerticalAlignment="Center"/>
+                             Width="180" Height="8"
+                             VerticalAlignment="Center"
+                             Foreground="#F44336"/>
                 <TextBlock x:Name="FatigueText"
                            Text="80%"
                            FontSize="16"
+                           Foreground="#F44336"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+            
+            <!-- Phase 5: 新按钮区 (Step Away / I Must Finish) -->
+            <StackPanel Orientation="Horizontal" 
+                        HorizontalAlignment="Center" 
+                        Spacing="20"
+                        Margin="0,24,0,0">
+                
+                <!-- Step Away 主按钮 -->
+                <Button x:Name="StartBreakButton" 
+                        Content="🚶 Step Away"
+                        Click="StartBreakButton_Click"
+                        MinWidth="160" MinHeight="48"
+                        FontSize="16"
+                        Style="{StaticResource AccentButtonStyle}"/>
+                
+                <!-- I Must Finish 长按按钮 -->
+                <Button x:Name="SkipButton" 
+                        Content="I Must Finish (长按 3 秒)"
+                        MinWidth="180" MinHeight="48"
+                        FontSize="14"
+                        Background="Transparent"
+                        BorderBrush="#666666"
+                        Foreground="#888888"
+                        PointerPressed="SkipButton_PointerPressed"
+                        PointerReleased="SkipButton_PointerReleased"
+                        PointerExited="SkipButton_PointerExited"/>
+            </StackPanel>
+            
+            <!-- 长按进度提示 -->
+            <StackPanel x:Name="HoldProgressPanel" Visibility="Collapsed" HorizontalAlignment="Center">
+                <ProgressBar x:Name="HoldProgressBar" 
+                             Value="0" Maximum="100"
+                             Width="180" Height="4"
+                             Foreground="#FF8C00"/>
+                <TextBlock x:Name="HoldStatusText"
+                           Text="继续按住..."
+                           FontSize="12"
+                           Foreground="#888888"
+                           HorizontalAlignment="Center"
+                           Margin="0,4,0,0"/>
+            </StackPanel>
+            
+            <!-- 倒计时 (仅在休息模式显示) -->
+            <StackPanel x:Name="CountdownPanel" Visibility="Collapsed" 
+                        Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                <TextBlock Text="休息剩余"
+                           FontSize="18"
+                           Foreground="#888888"
+                           VerticalAlignment="Center"/>
+                <TextBlock x:Name="CountdownText"
+                           Text="5:00"
+                           FontSize="48" FontWeight="Light"
                            Foreground="#8A2BE2"
                            VerticalAlignment="Center"/>
             </StackPanel>
             
-            <!-- 按钮区 -->
-            <StackPanel Orientation="Horizontal" 
-                        HorizontalAlignment="Center" 
-                        Spacing="24"
-                        Margin="0,32,0,0">
-                
-                <!-- 跳过按钮 -->
-                <Button x:Name="SkipButton" 
-                        Content="跳过 (Skip)"
-                        Click="SkipButton_Click"
-                        MinWidth="140" MinHeight="44"
-                        Background="Transparent"
-                        BorderBrush="#666666"
-                        Foreground="#AAAAAA"/>
-                
-                <!-- 推迟按钮 -->
-                <Button x:Name="SnoozeButton" 
-                        Content="推迟 5 分钟"
-                        Click="SnoozeButton_Click"
-                        MinWidth="140" MinHeight="44"
-                        Background="Transparent"
-                        BorderBrush="#8A2BE2"
-                        Foreground="#8A2BE2"/>
-                
-                <!-- 开始休息按钮 -->
-                <Button x:Name="StartBreakButton" 
-                        Content="开始休息"
-                        Click="StartBreakButton_Click"
-                        MinWidth="140" MinHeight="44"
-                        Style="{StaticResource AccentButtonStyle}"/>
-            </StackPanel>
-            
-            <!-- 提示文字 -->
-            <TextBlock Text="按 Esc 键可关闭此窗口"
-                       FontSize="12"
-                       Foreground="#555555"
+            <!-- 状态/提示文本 -->
+            <TextBlock x:Name="TipText"
+                       Text=""
+                       FontSize="13"
+                       Foreground="#666666"
                        HorizontalAlignment="Center"
-                       Margin="0,24,0,0"/>
+                       TextWrapping="Wrap"
+                       TextAlignment="Center"/>
         </StackPanel>
         
         <!-- 右上角关闭按钮 -->

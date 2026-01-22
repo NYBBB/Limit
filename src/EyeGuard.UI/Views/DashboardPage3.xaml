@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- 
+    DashboardPage3.xaml - Limit 3.0 全新 Bento Grid 布局
+    Phase 2.5: 视觉精调版
+    
+    布局结构:
+    ┌─────────────────┬─────────────┐
+    │                 │   Zone B    │
+    │     Zone A      │  Context    │
+    │   (The Core)    ├─────────────┤
+    │                 │   Zone C    │
+    │                 │  Drainers   │
+    └─────────────────┴─────────────┘
+-->
+<Page
+    x:Class="EyeGuard.UI.Views.DashboardPage3"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:EyeGuard.UI.Views"
+    xmlns:controls="using:EyeGuard.UI.Controls"
+    Background="Transparent">
+
+    <Grid Padding="24">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1.2*" MinWidth="400"/>
+            <ColumnDefinition Width="*" MinWidth="320"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Zone A: The Core (精力反应堆) - 占据左边两行 -->
+        <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="2"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="16"
+                Margin="0,0,12,0"
+                Padding="24">
+            <!-- 添加阴影效果 -->
+            <Border.Shadow>
+                <ThemeShadow/>
+            </Border.Shadow>
+            
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                
+                <!-- Header: 状态标题 + 右上角操作菜单 -->
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- 左侧：状态词作为卡片标题 -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                        <Ellipse Width="10" Height="10" 
+                                 Fill="{x:Bind ViewModel.StateIndicatorColor, Mode=OneWay}"/>
+                        <TextBlock Text="{x:Bind ViewModel.StatusLabel, Mode=OneWay}"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                        <!-- Phase 10: 省电模式绿叶图标 -->
+                        <Border Visibility="{x:Bind ViewModel.EcoModeVisibility, Mode=OneWay}"
+                                Background="#22A06B" CornerRadius="10"
+                                Padding="6,2" Margin="8,0,0,0"
+                                ToolTipService.ToolTip="已检测到使用电池。Limit 已自动进入低功耗模式。">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <FontIcon Glyph="&#xEC0A;" FontSize="12" Foreground="White"/>
+                                <TextBlock Text="省电" FontSize="11" Foreground="White"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                    
+                    <!-- 右侧：圆形图标按钮 -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                        <!-- 开始/停止按钮 -->
+                        <Button x:Name="StartButton" 
+                                Click="StartButton_Click"
+                                Width="36" Height="36"
+                                Padding="0"
+                                CornerRadius="18"
+                                ToolTipService.ToolTip="{x:Bind ViewModel.StartButtonText, Mode=OneWay}">
+                            <FontIcon Glyph="{x:Bind ViewModel.StartButtonIcon, Mode=OneWay}" FontSize="16"/>
+                        </Button>
+                        
+                        <!-- 更多菜单 -->
+                        <Button Width="36" Height="36" Padding="0" CornerRadius="18">
+                            <FontIcon Glyph="&#xE712;" FontSize="16"/>
+                            <Button.Flyout>
+                                <MenuFlyout>
+                                    <MenuFlyoutItem Text="我觉得很累" 
+                                                    Icon="Emoji"
+                                                    Click="CalibrateAsTired_Click"/>
+                                    <MenuFlyoutItem Text="我没那么累" 
+                                                    Icon="Like"
+                                                    Click="CalibrateAsFresh_Click"/>
+                                    <MenuFlyoutSeparator/>
+                                    <MenuFlyoutItem Text="我刚休息过" 
+                                                    Icon="Refresh"
+                                                    Click="CalibrateAfterRest_Click"/>
+                                    <MenuFlyoutSeparator/>
+                                    <MenuFlyoutItem Text="重置疲劳值" 
+                                                    Icon="Delete"
+                                                    Click="ResetButton_Click"/>
+                                </MenuFlyout>
+                            </Button.Flyout>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+                
+                <!-- Fatigue Ring - 居中放大显示 -->
+                <controls:FatigueRing Grid.Row="1"
+                                      x:Name="MainFatigueRing"
+                                      Value="{x:Bind ViewModel.FatigueValue, Mode=OneWay}"
+                                      IsCareMode="{x:Bind ViewModel.CareModeVisibility, Mode=OneWay}"
+                                      IsFocusMode="{x:Bind ViewModel.IsFocusCommitmentActive, Mode=OneWay}"
+                                      FocusRemainingSeconds="{x:Bind ViewModel.FocusRemainingSeconds, Mode=OneWay}"
+                                      FocusTotalSeconds="{x:Bind ViewModel.FocusTotalSeconds, Mode=OneWay}"
+                                      FocusTaskName="{x:Bind ViewModel.FocusTaskName, Mode=OneWay}"
+                                      IsEcoMode="{x:Bind ViewModel.IsEcoMode, Mode=OneWay}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Margin="0,20,0,20"/>
+            </Grid>
+        </Border>
+        
+        <!-- Zone B: Context Monitor (上下文感知) - 右上 -->
+        <controls:ContextCard Grid.Column="1" Grid.Row="0"
+                              x:Name="ContextCardControl"
+                              Margin="12,0,0,6"
+                              AppName="{x:Bind ViewModel.CurrentAppName, Mode=OneWay}"
+                              AppIcon="{x:Bind ViewModel.CurrentAppIcon, Mode=OneWay}"
+                              ClusterName="{x:Bind ViewModel.CurrentClusterName, Mode=OneWay}"
+                              ClusterColor="{x:Bind ViewModel.CurrentClusterColor, Mode=OneWay}"
+                              IsFocusing="{x:Bind ViewModel.IsFocusingMode, Mode=TwoWay}"
+                              SessionTime="{x:Bind ViewModel.CurrentSessionTime, Mode=OneWay}"
+                              RecentApp1Icon="{x:Bind ViewModel.RecentApp1Icon, Mode=OneWay}"
+                              RecentApp2Icon="{x:Bind ViewModel.RecentApp2Icon, Mode=OneWay}"
+                              RecentApp3Icon="{x:Bind ViewModel.RecentApp3Icon, Mode=OneWay}"
+                              FocusingChanged="OnFocusingChanged"/>
+        
+        <!-- Zone C: Drainers (消耗排行) - 右下 -->
+        <controls:DrainersCard Grid.Column="1" Grid.Row="1"
+                               x:Name="DrainersCardControl"
+                               Margin="12,6,0,0"
+                               Drainers="{x:Bind ViewModel.TopDrainers, Mode=OneWay}"
+                               ShowFragmentWarning="{x:Bind ViewModel.ShowFragmentWarning, Mode=OneWay}"
+                               FragmentTime="{x:Bind ViewModel.FragmentTimeText, Mode=OneWay}"/>
+        
+        <!-- Debug Panel (可折叠) - 底部横跨两列 -->
+        <Border Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="2"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Margin="0,12,0,0"
+                Padding="16"
+                Visibility="{x:Bind ViewModel.ShowDebugPanel, Mode=OneWay}">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,12">
+                    <FontIcon Glyph="&#xE90F;" FontSize="14" Foreground="#888888"/>
+                    <TextBlock Text="开发者调试" FontSize="12" FontWeight="SemiBold" Foreground="#888888"/>
+                </StackPanel>
+                
+                <Grid ColumnSpacing="24" RowSpacing="6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Row 0 -->
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="用户状态:" FontSize="12" Foreground="Gray"/>
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{x:Bind ViewModel.DebugUserState, Mode=OneWay}" FontSize="12" FontWeight="SemiBold"/>
+                    
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="疲劳值(精确):" FontSize="12" Foreground="Gray"/>
+                    <TextBlock Grid.Row="0" Grid.Column="3" Text="{x:Bind ViewModel.DebugFatiguePrecise, Mode=OneWay}" FontSize="12"/>
+                    
+                    <TextBlock Grid.Row="0" Grid.Column="4" Text="空闲秒数:" FontSize="12" Foreground="Gray"/>
+                    <TextBlock Grid.Row="0" Grid.Column="5" Text="{x:Bind ViewModel.DebugIdleSeconds, Mode=OneWay}" FontSize="12"/>
+                    
+                    <!-- Row 1 -->
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="敏感度偏差:" FontSize="12" Foreground="Gray"/>
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{x:Bind ViewModel.DebugSensitivityBias, Mode=OneWay}" FontSize="12" Foreground="#FF8C00"/>
+                    
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="关怀模式:" FontSize="12" Foreground="Gray"/>
+                    <TextBlock Grid.Row="1" Grid.Column="3" Text="{x:Bind ViewModel.DebugCareMode, Mode=OneWay}" FontSize="12" Foreground="#FF8C00"/>
+                    
+                    <TextBlock Grid.Row="1" Grid.Column="4" Text="被动消耗:" FontSize="12" Foreground="Gray"/>
+                    <TextBlock Grid.Row="1" Grid.Column="5" Text="{x:Bind ViewModel.DebugPassiveConsumption, Mode=OneWay}" FontSize="12" Foreground="#00B294"/>
+                    
+                    <!-- Row 2 -->
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="全屏状态:" FontSize="12" Foreground="Gray"/>
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{x:Bind ViewModel.DebugIsFullscreen, Mode=OneWay}" FontSize="12" Foreground="#00B294"/>
+                    
+                    <TextBlock Grid.Row="2" Grid.Column="2" Text="快照倒计时:" FontSize="12" Foreground="Gray"/>
+                    <TextBlock Grid.Row="2" Grid.Column="3" Text="{x:Bind ViewModel.DebugSnapshotCountdown, Mode=OneWay}" FontSize="12" Foreground="#0078D4"/>
+                    
+                    <TextBlock Grid.Row="2" Grid.Column="4" Text="今日快照:" FontSize="12" Foreground="Gray"/>
+                    <TextBlock Grid.Row="2" Grid.Column="5" Text="{x:Bind ViewModel.DebugTodaySnapshots, Mode=OneWay}" FontSize="12" Foreground="#0078D4"/>
+                    
+                    <!-- Row 3: 提醒阈值 -->
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="轻提醒阈值:" FontSize="12" Foreground="Gray"/>
+                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{x:Bind ViewModel.DebugSoftThreshold, Mode=OneWay}" FontSize="12" Foreground="#FF6D00"/>
+                    
+                    <TextBlock Grid.Row="3" Grid.Column="2" Text="强制阈值:" FontSize="12" Foreground="Gray"/>
+                    <TextBlock Grid.Row="3" Grid.Column="3" Text="{x:Bind ViewModel.DebugForceThreshold, Mode=OneWay}" FontSize="12" Foreground="#E81123"/>
+                    
+                    <TextBlock Grid.Row="3" Grid.Column="4" Text="干预模式:" FontSize="12" Foreground="Gray"/>
+                    <TextBlock Grid.Row="3" Grid.Column="5" Text="{x:Bind ViewModel.DebugInterventionMode, Mode=OneWay}" FontSize="12" Foreground="#8A2BE2"/>
+                </Grid>
+                
+                <!-- 新增：Debug 控制 -->
+                <StackPanel Margin="0,16,0,0" Spacing="12">
+                    <MenuFlyoutSeparator/>
+                    
+                    <!-- 疲劳值调节 -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="50"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="模拟疲劳值:" VerticalAlignment="Center" FontSize="12" Foreground="Gray"/>
+                        <Slider Grid.Column="1" Margin="12,0" 
+                                Minimum="0" Maximum="100" 
+                                Value="{x:Bind ViewModel.DebugFatigueValue, Mode=TwoWay}"/>
+                        <TextBlock Grid.Column="2" Text="{x:Bind ViewModel.DebugFatigueText, Mode=OneWay}"
+                                   VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="12"/>
+                    </Grid>
+                    
+                    <!-- 通知测试 -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="模拟通知:" VerticalAlignment="Center" FontSize="12" Foreground="Gray"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" Margin="12,0,0,0">
+                            <Button Content="常规通知" FontSize="12" Padding="8,4" CornerRadius="4"
+                                    Command="{x:Bind ViewModel.TriggerDebugNotificationCommand}" CommandParameter="Info"/>
+                            <Button Content="干预提醒" FontSize="12" Padding="8,4" CornerRadius="4"
+                                    Command="{x:Bind ViewModel.TriggerDebugNotificationCommand}" CommandParameter="Warning"/>
+                            <Button Content="休息任务" FontSize="12" Padding="8,4" CornerRadius="4"
+                                    Command="{x:Bind ViewModel.TriggerDebugNotificationCommand}" CommandParameter="Break"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+        
+        <!-- Debug Toggle Button (右下角悬浮) -->
+        <Button Grid.Column="1" Grid.Row="1"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Margin="0,0,12,12"
+                Width="32" Height="32"
+                CornerRadius="16"
+                Padding="0"
+                Click="DebugButton_Click"
+                ToolTipService.ToolTip="切换调试面板">
+            <FontIcon Glyph="&#xE90F;" FontSize="14"/>
+        </Button>
+    </Grid>
+</Page>

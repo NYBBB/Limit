@@ -400,8 +400,7 @@
                         <lvc:CartesianChart Series="{x:Bind ViewModel.Series, Mode=OneWay}"
                                             XAxes="{x:Bind ViewModel.XAxes, Mode=OneWay}"
                                             YAxes="{x:Bind ViewModel.YAxes, Mode=OneWay}"
-                                            TooltipPosition="Top"
-                                            TooltipTextPaint="{x:Bind ViewModel.LegendPaint}">
+                                            TooltipPosition="Top">
                         </lvc:CartesianChart>
                     </Border>
                 </StackPanel>
@@ -455,6 +454,8 @@
                             <RowDefinition/>
                             <RowDefinition/>
                             <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
                         </Grid.RowDefinitions>
                         
                         <!-- 左列 -->
@@ -473,6 +474,13 @@
                         <TextBlock Grid.Row="4" Grid.Column="0" Text="疲劳斜率:" FontSize="12" Foreground="Gray"/>
                         <TextBlock Grid.Row="4" Grid.Column="1" Text="{x:Bind ViewModel.FatigueSlopeText, Mode=OneWay}" FontSize="12" Foreground="#8A2BE2"/>
                         
+                        <!-- Limit 3.0 新增 -->
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="敏感度偏差:" FontSize="12" Foreground="Gray"/>
+                        <TextBlock Grid.Row="5" Grid.Column="1" Text="{x:Bind ViewModel.SensitivityBiasText, Mode=OneWay}" FontSize="12" Foreground="#FF8C00"/>
+                        
+                        <TextBlock Grid.Row="6" Grid.Column="0" Text="关怀模式:" FontSize="12" Foreground="Gray"/>
+                        <TextBlock Grid.Row="6" Grid.Column="1" Text="{x:Bind ViewModel.CareModeText, Mode=OneWay}" FontSize="12" Foreground="#FF8C00"/>
+                        
                         <!-- 右列 -->
                         <TextBlock Grid.Row="0" Grid.Column="2" Text="音频播放:" FontSize="12" Foreground="Gray"/>
                         <TextBlock Grid.Row="0" Grid.Column="3" Text="{x:Bind ViewModel.IsAudioPlayingText, Mode=OneWay}" FontSize="12"/>
@@ -488,6 +496,13 @@
                         
                         <TextBlock Grid.Row="4" Grid.Column="2" Text="休息建议:" FontSize="12" Foreground="Gray"/>
                         <TextBlock Grid.Row="4" Grid.Column="3" Text="{x:Bind ViewModel.BreakSuggestion, Mode=OneWay}" FontSize="12" Foreground="#8A2BE2"/>
+                        
+                        <!-- Limit 3.0 新增 -->
+                        <TextBlock Grid.Row="5" Grid.Column="2" Text="被动消耗:" FontSize="12" Foreground="Gray"/>
+                        <TextBlock Grid.Row="5" Grid.Column="3" Text="{x:Bind ViewModel.PassiveConsumptionText, Mode=OneWay}" FontSize="12" Foreground="#00B294"/>
+                        
+                        <TextBlock Grid.Row="6" Grid.Column="2" Text="全屏状态:" FontSize="12" Foreground="Gray"/>
+                        <TextBlock Grid.Row="6" Grid.Column="3" Text="{x:Bind ViewModel.IsFullscreenText, Mode=OneWay}" FontSize="12" Foreground="#00B294"/>
                     </Grid>
                     
                     <!-- 调试用疲劳值滑块 -->

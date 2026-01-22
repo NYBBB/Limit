@@ -31,6 +31,20 @@ public partial class AnalyticsViewModel : ObservableObject
     [ObservableProperty]
     private string _selectedDateText = "今天";
     
+    // 调试信息
+    [ObservableProperty]
+    private string _debugInfo = "等待加载...";
+    
+    // ===== Phase 3: Insight Banner =====
+    [ObservableProperty]
+    private string _insightText = "正在分析你的使用模式...";
+    
+    [ObservableProperty]
+    private string _insightIcon = "💡";
+    
+    [ObservableProperty]
+    private bool _isInsightAnimating = false;
+    
     // 应用使用柱状图
     [ObservableProperty]
     private ISeries[] _hourlyUsageSeries = Array.Empty<ISeries>();
@@ -96,15 +110,18 @@ public partial class AnalyticsViewModel : ObservableObject
     [ObservableProperty]
     private Axis[] _weeklyTrendsYAxes = Array.Empty<Axis>();
     
-    public AnalyticsViewModel()
+    public AnalyticsViewModel(bool skipInitialLoad = false)
     {
         _databaseService = App.Services.GetRequiredService<DatabaseService>();
         
         // 初始化坐标轴
         InitializeAxes();
         
-        // 异步加载今日数据
-        LoadDataForDateAsync(DateTime.Today);
+        // 如果不跳过初始加载，则异步加载今日数据
+        if (!skipInitialLoad)
+        {
+            LoadDataForDateAsync(DateTime.Today);
+        }
     }
     
     partial void OnSelectedDateChanged(DateTimeOffset value)
@@ -203,10 +220,68 @@ public partial class AnalyticsViewModel : ObservableObject
                 Name = "疲劳值",
                 Fill = new SolidColorPaint(new SKColor(138, 43, 226, 40)),
                 Stroke = new SolidColorPaint(new SKColor(138, 43, 226)) { StrokeThickness = 3 },
-                GeometrySize = 8,  // 减小数据点大小
+                GeometrySize = 8,
                 GeometryFill = new SolidColorPaint(new SKColor(138, 43, 226)),
-                GeometryStroke = null,  // 移除白色描边
+                GeometryStroke = null,
                 LineSmoothness = 0.3,
+            }
+        };
+        
+        // 预初始化 Daily Rhythm 轴（避免 XAML 绑定空数组时崩溃）
+        DailyRhythmXAxes = new Axis[]
+        {
+            new Axis
+            {
+                Name = "时间",
+                MinLimit = 0,
+                MaxLimit = 24,
+                ForceStepToMin = true,
+                MinStep = 2,
+                Labeler = value => $"{value:F0}:00",
+                TextSize = 12,
+                LabelsPaint = labelPaint,
+                NamePaint = labelPaint
+            }
+        };
+        
+        DailyRhythmYAxes = new Axis[]
+        {
+            new Axis
+            {
+                Name = "疲劳度",
+                MinLimit = 0,
+                MaxLimit = 100,
+                MinStep = 20,
+                Labeler = value => $"{value}%",
+                TextSize = 12,
+                LabelsPaint = labelPaint,
+                NamePaint = labelPaint
+            }
+        };
+        
+        // 预初始化 Weekly Trends 轴
+        WeeklyTrendsXAxes = new Axis[]
+        {
+            new Axis
+            {
+                Labels = new[] { "", "", "", "", "", "", "" },
+                TextSize = 12,
+                LabelsPaint = labelPaint
+            }
+        };
+        
+        WeeklyTrendsYAxes = new Axis[]
+        {
+            new Axis
+            {
+                Name = "疲劳度",
+                MinLimit = 0,
+                MaxLimit = 100,
+                MinStep = 20,
+                Labeler = value => $"{value}%",
+                TextSize = 12,
+                LabelsPaint = labelPaint,
+                NamePaint = labelPaint
             }
         };
     }
@@ -223,14 +298,40 @@ public partial class AnalyticsViewModel : ObservableObject
     /// <summary>
     /// 加载指定日期的所有数据（应用使用 + 疲劳趋势 + Phase 6 数据）
     /// </summary>
-    private async void LoadDataForDateAsync(DateTime date)
+    public async Task LoadDataForDateAsync(DateTime date)
     {
-        await LoadHourlyUsageAsync(date);
-        await LoadFatigueTrendAsync(date);
-        await LoadEnergyPieAsync(date);
-        await LoadGrindStatisticsAsync(date);
-        await LoadDailyRhythmAsync(date);
-        await LoadWeeklyTrendsAsync(date);
+        try
+        {
+            DebugInfo = $"开始加载 {date:yyyy-MM-dd} 数据...";
+            
+            await LoadHourlyUsageAsync(date);
+            DebugInfo = $"✓ 小时记录已加载";
+            
+            await LoadFatigueTrendAsync(date);
+            DebugInfo += $"\n✓ 疲劳趋势已加载";
+            
+            await LoadEnergyPieAsync(date);
+            DebugInfo += $"\n✓ 精力饼图已加载";
+            
+            await LoadGrindStatisticsAsync(date);
+            DebugInfo += $"\n✓ Grind统计已加载";
+            
+            await LoadDailyRhythmAsync(date);
+            DebugInfo += $"\n✓ 日节奏图已加载";
+            
+            await LoadWeeklyTrendsAsync(date);
+            DebugInfo += $"\n✓ 周趋势已加载";
+            
+            // Phase 3: 生成智能洞察
+            await GenerateInsightAsync(date);
+            
+            DebugInfo += $"\n\n全部数据加载完成!";
+        }
+        catch (Exception ex)
+        {
+            DebugInfo = $"加载失败: {ex.Message}\n{ex.StackTrace}";
+            Debug.WriteLine($"[Analytics] LoadDataForDateAsync error: {ex}");
+        }
     }
     
     /// <summary>
@@ -521,7 +622,7 @@ public partial class AnalyticsViewModel : ObservableObject
             App.MainWindow.DispatcherQueue.TryEnqueue(() =>
             {
                 DailyRhythmSeries = series;
-                InitializeDailyRhythmAxes();
+                // 轴已在 InitializeAxes 中预初始化，不需要重复创建
             });
         }
         catch (Exception ex)
@@ -670,5 +771,102 @@ public partial class AnalyticsViewModel : ObservableObject
                 NamePaint = labelPaint
             }
         };
+    }
+    
+    /// <summary>
+    /// Phase 3: 生成智能洞察
+    /// 基于当天数据分析，生成一条有洞察力的文字提示
+    /// </summary>
+    private async Task GenerateInsightAsync(DateTime date)
+    {
+        try
+        {
+            IsInsightAnimating = true;
+            
+            // 收集数据用于洞察
+            var snapshots = await _databaseService.GetFatigueSnapshotsAsync(date);
+            var hourlyRecords = await _databaseService.GetHourlyUsageAsync(date);
+            
+            // 基于规则引擎生成洞察
+            var insight = GenerateInsightFromData(snapshots, hourlyRecords, date);
+            
+            // 更新 UI (带简单延迟模拟打字机效果)
+            await Task.Delay(500);
+            InsightIcon = insight.Icon;
+            InsightText = insight.Text;
+            
+            IsInsightAnimating = false;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Analytics] GenerateInsight error: {ex.Message}");
+            InsightIcon = "💡";
+            InsightText = "继续保持良好的工作节奏！";
+            IsInsightAnimating = false;
+        }
+    }
+    
+    /// <summary>
+    /// 基于数据生成洞察（简单规则引擎）
+    /// </summary>
+    private (string Icon, string Text) GenerateInsightFromData(
+        List<Core.Entities.FatigueSnapshot> snapshots,
+        List<Core.Entities.HourlyUsageRecord> hourlyRecords,
+        DateTime date)
+    {
+        // 规则 1：检查是否有数据
+        if (snapshots.Count == 0 && hourlyRecords.Count == 0)
+        {
+            return ("📊", "这一天还没有足够的数据进行分析。");
+        }
+        
+        // 规则 2：计算峰值疲劳
+        double peakFatigue = snapshots.Count > 0 ? snapshots.Max(s => s.FatigueValue) : 0;
+        
+        // 规则 3：计算总活跃时间
+        int totalActiveMinutes = hourlyRecords.Sum(r => r.DurationSeconds) / 60;
+        
+        // 规则 4：找出最常用应用
+        var topApp = hourlyRecords
+            .GroupBy(r => r.AppName)
+            .OrderByDescending(g => g.Sum(r => r.DurationSeconds))
+            .FirstOrDefault()?.Key ?? "未知";
+        
+        // 规则 5：检查是否过载
+        int overloadMinutes = 0;
+        if (snapshots.Count > 0)
+        {
+            // 估算过载时间（疲劳 >= 80%）
+            var highFatigueSnapshots = snapshots.Where(s => s.FatigueValue >= 80).ToList();
+            overloadMinutes = highFatigueSnapshots.Count; // 假设每个快照约1分钟间隔
+        }
+        
+        // 生成洞察
+        if (peakFatigue >= 90)
+        {
+            return ("🔥", $"今日疲劳峰值达到 {peakFatigue:F0}%！建议增加休息频率，避免持续高负荷工作。");
+        }
+        
+        if (overloadMinutes > 60)
+        {
+            return ("⚠️", $"累计 {overloadMinutes} 分钟处于高疲劳状态。尝试每工作 45 分钟休息 10 分钟。");
+        }
+        
+        if (totalActiveMinutes > 480) // 8小时
+        {
+            return ("💪", $"今日活跃 {totalActiveMinutes / 60} 小时，是个充实的一天！记得适当放松。");
+        }
+        
+        if (totalActiveMinutes > 0 && peakFatigue < 50)
+        {
+            return ("🌟", $"今日疲劳控制得很好（峰值仅 {peakFatigue:F0}%），工作节奏健康！");
+        }
+        
+        if (date.Date == DateTime.Today)
+        {
+            return ("💡", $"今日已活跃 {totalActiveMinutes} 分钟，最常用：{IconMapper.GetFriendlyName(topApp)}。");
+        }
+        
+        return ("📈", $"当日活跃 {totalActiveMinutes} 分钟，疲劳峰值 {peakFatigue:F0}%。");
     }
 }

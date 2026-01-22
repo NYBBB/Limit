@@ -63,13 +63,7 @@
                     
                     <NavigationViewItemSeparator/>
                     
-                    <NavigationViewItem Tag="Rules" Content="规则">
-                        <NavigationViewItem.Icon>
-                            <FontIcon Glyph="&#xE823;"/>
-                        </NavigationViewItem.Icon>
-                    </NavigationViewItem>
-                    
-                    <NavigationViewItem Tag="Settings" Content="设置">
+                    <NavigationViewItem Tag="Rules" Content="偏好设置">
                         <NavigationViewItem.Icon>
                             <FontIcon Glyph="&#xE713;"/>
                         </NavigationViewItem.Icon>

@@ -24,5 +24,11 @@ public enum UserActivityState
     /// <summary>
     /// 离开状态 - 长时间无活动，认为用户离开了。
     /// </summary>
-    Away
+    Away,
+    
+    /// <summary>
+    /// 被动消耗状态 (Limit 3.0) - 看视频/全屏媒体。
+    /// 低负载，不恢复精力但增长也慢。
+    /// </summary>
+    PassiveConsumption
 }

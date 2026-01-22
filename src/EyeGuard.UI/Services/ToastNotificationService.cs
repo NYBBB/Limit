@@ -33,19 +33,28 @@ public class ToastNotificationService
     }
     
     /// <summary>
+    /// 通知操作被触发时发生
+    /// 参数: action ("rest", "startBreak", "snooze", "ignore")
+    /// </summary>
+    public event EventHandler<string>? NotificationActionInvoked;
+
+    /// <summary>
     /// 发送干预提醒通知
     /// </summary>
     public void ShowInterventionNotification(double fatigueValue, string message)
     {
         if (!_initialized) return;
         
+        var config = EyeGuard.Core.Models.NotificationConfig.Default;
+        
         var toast = new AppNotificationBuilder()
-            .AddText($"疲劳提醒 ({fatigueValue:F0}%)")
+            .AddText(string.Format(config.InterventionTitle, fatigueValue.ToString("F0")))
             .AddText(message)
-            .AddButton(new AppNotificationButton("休息一下")
+            .AddButton(new AppNotificationButton(config.InterventionButtonRest)
                 .AddArgument("action", "rest"))
-            .AddButton(new AppNotificationButton("稍后提醒")
+            .AddButton(new AppNotificationButton(config.InterventionButtonSnooze)
                 .AddArgument("action", "snooze"))
+            .SetScenario(AppNotificationScenario.Alarm)
             .BuildNotification();
         
         _notificationManager?.Show(toast);
@@ -53,19 +62,38 @@ public class ToastNotificationService
     }
     
     /// <summary>
+    /// 发送通用通知 (Debug用)
+    /// </summary>
+    public void ShowNotification(string title, string message)
+    {
+        if (!_initialized) return;
+
+        var toast = new AppNotificationBuilder()
+            .AddText(title)
+            .AddText(message)
+            .BuildNotification();
+
+        _notificationManager?.Show(toast);
+        Debug.WriteLine($"[Toast] General notification sent: {title} - {message}");
+    }
+
+    /// <summary>
     /// 发送 Break Task 通知
     /// </summary>
     public void ShowBreakTaskNotification(string taskName, int durationSeconds)
     {
         if (!_initialized) return;
         
+        var config = EyeGuard.Core.Models.NotificationConfig.Default;
+        
         var toast = new AppNotificationBuilder()
-            .AddText("该休息了！")
-            .AddText($"{taskName} - {durationSeconds}秒")
-            .AddButton(new AppNotificationButton("开始休息")
+            .AddText(config.BreakTaskTitle)
+            .AddText(string.Format(config.BreakTaskContent, taskName, durationSeconds))
+            .AddButton(new AppNotificationButton(config.BreakTaskButtonStart)
                 .AddArgument("action", "startBreak"))
-            .AddButton(new AppNotificationButton("忽略")
+            .AddButton(new AppNotificationButton(config.BreakTaskButtonIgnore)
                 .AddArgument("action", "ignore"))
+            .SetScenario(AppNotificationScenario.Alarm)
             .BuildNotification();
         
         _notificationManager?.Show(toast);
@@ -80,8 +108,32 @@ public class ToastNotificationService
         var arguments = args.Arguments;
         Debug.WriteLine($"[Toast] Notification invoked with arguments: {arguments}");
         
-        // TODO: 根据 action 参数处理不同的点击事件
-        // 例如: "rest" -> 打开主窗口并触发休息
+        // 解析 action 参数
+        // 格式通常是: action=rest
+        string action = "";
+        if (args.Arguments.TryGetValue("action", out var value))
+        {
+            action = value;
+        }
+        
+        if (!string.IsNullOrEmpty(action))
+        {
+            // 在 UI 线程触发事件
+            App.MainWindow.DispatcherQueue.TryEnqueue(() =>
+            {
+                NotificationActionInvoked?.Invoke(this, action);
+                
+                // 确保主窗口激活
+                if (action == "rest" || action == "startBreak")
+                {
+                   App.MainWindow.Activate();
+                   if (App.MainWindow.Content is Microsoft.UI.Xaml.UIElement content)
+                   {
+                       content.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+                   }
+                }
+            });
+        }
     }
     
     /// <summary>

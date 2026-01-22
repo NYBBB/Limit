@@ -51,13 +51,68 @@ public sealed partial class MainWindow : Window
         _toastService = new ToastNotificationService();
         _toastService.Initialize();
         
+        // Phase 5: 启动托盘状态更新定时器
+        StartTrayUpdateTimer();
+        
         // 监听窗口关闭事件
         this.Closed += MainWindow_Closed;
         
-        // 默认导航到仪表盘页面
-        ContentFrame.Navigate(typeof(Views.DashboardPage));
+        // 默认导航到仪表盘页面 (Limit 3.0)
+        ContentFrame.Navigate(typeof(Views.DashboardPage3));
         
         Debug.WriteLine("[MainWindow] Initialized with tray and toast services");
+    }
+    
+    /// <summary>
+    /// Phase 5: 启动托盘状态更新定时器（每秒轮询疲劳值）
+    /// </summary>
+    private void StartTrayUpdateTimer()
+    {
+        try
+        {
+            var timer = DispatcherQueue.CreateTimer();
+            timer.Interval = TimeSpan.FromSeconds(1);
+            timer.Tick += (s, e) => UpdateTrayStatus();
+            timer.Start();
+            
+            Debug.WriteLine("[MainWindow] Tray update timer started");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[MainWindow] Failed to start tray update timer: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// 更新托盘状态（从 FatigueEngine 读取疲劳值）
+    /// </summary>
+    private void UpdateTrayStatus()
+    {
+        try
+        {
+            var fatigueEngine = App.Services.GetService(typeof(EyeGuard.Infrastructure.Services.FatigueEngine)) 
+                as EyeGuard.Infrastructure.Services.FatigueEngine;
+            
+            if (fatigueEngine != null)
+            {
+                var fatigue = fatigueEngine.FatigueValue;
+                
+                // 根据疲劳级别显示不同 emoji
+                var statusEmoji = fatigue switch
+                {
+                    < 40 => "😊",      // 良好
+                    < 60 => "😐",      // 一般
+                    < 80 => "😓",      // 疲劳
+                    _ => "🔥"         // 过载
+                };
+                
+                _trayIconService.UpdateTooltip($"Limit {statusEmoji} 疲劳: {fatigue:F0}%");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[MainWindow] UpdateTrayStatus error: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -121,11 +176,11 @@ public sealed partial class MainWindow : Window
     {
         var pageType = pageTag switch
         {
-            "Dashboard" => typeof(Views.DashboardPage),
+            "Dashboard" => typeof(Views.DashboardPage3), // Limit 3.0
             "Analytics" => typeof(Views.AnalyticsPage),
             "Rules" => typeof(Views.RulesPage),
             "Settings" => typeof(Views.SettingsPage),
-            _ => typeof(Views.DashboardPage)
+            _ => typeof(Views.DashboardPage3)
         };
 
         ContentFrame.Navigate(pageType);
@@ -140,19 +195,21 @@ public sealed partial class MainWindow : Window
 
     private void StartMonitoring_Click(object sender, RoutedEventArgs e)
     {
-        var vm = DashboardViewModel.Instance;
+        // Limit 3.0 Switched to DashboardViewModel3
+        var vm = DashboardViewModel3.Instance;
         if (!vm.IsMonitoring)
         {
-            vm.StartSimulationCommand.Execute(null);
+            vm.ToggleMonitoring();
         }
     }
 
     private void StopMonitoring_Click(object sender, RoutedEventArgs e)
     {
-        var vm = DashboardViewModel.Instance;
+        // Limit 3.0 Switched to DashboardViewModel3
+        var vm = DashboardViewModel3.Instance;
         if (vm.IsMonitoring)
         {
-            vm.StartSimulationCommand.Execute(null);
+            vm.ToggleMonitoring();
         }
     }
 

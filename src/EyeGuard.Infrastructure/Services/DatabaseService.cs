@@ -31,6 +31,16 @@ public class DatabaseService
         await _database.CreateTableAsync<FatigueSnapshot>();
         await _database.CreateTableAsync<HourlyUsageRecord>();
         await _database.CreateTableAsync<BreakTaskRecord>();
+        await _database.CreateTableAsync<Cluster>();  // Limit 3.0: 工作流簇表
+        await _database.CreateTableAsync<DailyAggregateRecord>();  // Phase 6: 每日聚合表
+    }
+    
+    /// <summary>
+    /// 公开初始化方法（供 ClusterService 调用）
+    /// </summary>
+    public async Task InitializeAsync()
+    {
+        await InitAsync();
     }
 
     public async Task<List<UsageRecord>> GetUsageForDateAsync(DateTime date)
@@ -221,5 +231,152 @@ public class DatabaseService
             .OrderByDescending(r => r.DurationSeconds)
             .Take(count)
             .ToListAsync();
+    }
+    
+    // ===== Limit 3.0: 工作流簇相关方法 =====
+    
+    /// <summary>
+    /// 获取所有簇
+    /// </summary>
+    public async Task<List<Cluster>> GetAllClustersAsync()
+    {
+        await InitAsync();
+        return await _database.Table<Cluster>().ToListAsync();
+    }
+    
+    /// <summary>
+    /// 保存簇（新增或更新）
+    /// </summary>
+    public async Task SaveClusterAsync(Cluster cluster)
+    {
+        await InitAsync();
+        if (cluster.Id == 0)
+        {
+            await _database.InsertAsync(cluster);
+        }
+        else
+        {
+            await _database.UpdateAsync(cluster);
+        }
+    }
+    
+    /// <summary>
+    /// 删除簇
+    /// </summary>
+    public async Task DeleteClusterAsync(int clusterId)
+    {
+        await InitAsync();
+        await _database.DeleteAsync<Cluster>(clusterId);
+    }
+    
+    // ===== Phase 6: 数据聚合相关方法 =====
+    
+    /// <summary>
+    /// 获取所有每小时使用记录
+    /// </summary>
+    public async Task<List<HourlyUsageRecord>> GetAllHourlyUsageAsync()
+    {
+        await InitAsync();
+        return await _database.Table<HourlyUsageRecord>()
+            .OrderBy(r => r.Date)
+            .ThenBy(r => r.Hour)
+            .ToListAsync();
+    }
+    
+    /// <summary>
+    /// 保存每日聚合记录
+    /// </summary>
+    public async Task SaveDailyAggregateAsync(DailyAggregateRecord record)
+    {
+        await InitAsync();
+        
+        // 检查是否已存在该日期的聚合记录
+        var existing = await _database.Table<DailyAggregateRecord>()
+            .Where(r => r.Date == record.Date)
+            .FirstOrDefaultAsync();
+        
+        if (existing != null)
+        {
+            record.Id = existing.Id;
+            await _database.UpdateAsync(record);
+        }
+        else
+        {
+            await _database.InsertAsync(record);
+        }
+    }
+    
+    /// <summary>
+    /// 删除指定日期的每小时使用记录
+    /// </summary>
+    public async Task DeleteHourlyUsageByDateAsync(DateTime date)
+    {
+        await InitAsync();
+        await _database.ExecuteAsync(
+            "DELETE FROM HourlyUsageRecords WHERE Date = ?", 
+            date.Date);
+    }
+    
+    /// <summary>
+    /// 删除指定 ID 的每小时使用记录
+    /// </summary>
+    public async Task DeleteHourlyUsageByIdAsync(int id)
+    {
+        await InitAsync();
+        await _database.DeleteAsync<HourlyUsageRecord>(id);
+    }
+    
+    /// <summary>
+    /// 获取每日聚合记录
+    /// </summary>
+    public async Task<List<DailyAggregateRecord>> GetDailyAggregatesAsync(DateTime startDate, DateTime endDate)
+    {
+        await InitAsync();
+        return await _database.Table<DailyAggregateRecord>()
+            .Where(r => r.Date >= startDate.Date && r.Date <= endDate.Date)
+            .OrderByDescending(r => r.Date)
+            .ToListAsync();
+    }
+    
+    // ===== Phase 6: 聚合服务辅助方法 =====
+    
+    /// <summary>
+    /// 获取指定日期的休息任务记录
+    /// </summary>
+    public async Task<List<BreakTaskRecord>> GetBreakTasksForDateAsync(DateTime date)
+    {
+        await InitAsync();
+        var startOfDay = date.Date;
+        var endOfDay = startOfDay.AddDays(1);
+        
+        return await _database.Table<BreakTaskRecord>()
+            .Where(r => r.CreatedAt >= startOfDay && r.CreatedAt < endOfDay)
+            .ToListAsync();
+    }
+    
+    /// <summary>
+    /// 获取指定日期范围的疲劳快照（用于聚合计算）
+    /// </summary>
+    public async Task<List<FatigueSnapshot>> GetFatigueSnapshotsForDateRangeAsync(DateTime startDate, DateTime endDate)
+    {
+        await InitAsync();
+        return await _database.Table<FatigueSnapshot>()
+            .Where(s => s.Date >= startDate.Date && s.Date <= endDate.Date)
+            .OrderBy(s => s.RecordedAt)
+            .ToListAsync();
+    }
+    
+    /// <summary>
+    /// 删除指定日期的休息任务记录（聚合后清理）
+    /// </summary>
+    public async Task DeleteBreakTasksByDateAsync(DateTime date)
+    {
+        await InitAsync();
+        var startOfDay = date.Date;
+        var endOfDay = startOfDay.AddDays(1);
+        
+        await _database.ExecuteAsync(
+            "DELETE FROM BreakTaskRecords WHERE CreatedAt >= ? AND CreatedAt < ?", 
+            startOfDay, endOfDay);
     }
 }

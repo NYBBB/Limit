@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+    ClusterEditorControl.xaml - Phase 4: Cluster 编辑器
+    左侧未分类应用池 + 右侧 Cluster 桶
+-->
+<UserControl
+    x:Class="EyeGuard.UI.Controls.ClusterEditorControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:EyeGuard.UI.Controls">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="2*"/>
+        </Grid.ColumnDefinitions>
+        
+        <!-- 左侧：未分类应用池 -->
+        <Border Grid.Column="0"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,8,0"
+                AllowDrop="True"
+                DragOver="UnclassifiedArea_DragOver"
+                Drop="UnclassifiedArea_Drop">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                
+                <!-- 标题 -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,12">
+                    <FontIcon Glyph="&#xE71D;" FontSize="18"/>
+                    <TextBlock Text="未分类应用" FontSize="16" FontWeight="SemiBold"/>
+                </StackPanel>
+                
+                <!-- 搜索框 -->
+                <TextBox Grid.Row="1" 
+                         x:Name="SearchBox"
+                         PlaceholderText="搜索应用..."
+                         Margin="0,0,0,12"
+                         TextChanged="SearchBox_TextChanged"/>
+                
+                <!-- 应用列表 (Tag 样式) -->
+                <ScrollViewer Grid.Row="2">
+                    <ItemsControl x:Name="UnclassifiedAppsContainer" 
+                                  ItemsSource="{x:Bind UnclassifiedApps, Mode=OneWay}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Vertical" Spacing="4"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="local:AppTagItem">
+                                <Border Background="{ThemeResource ControlAltFillColorSecondaryBrush}"
+                                        CornerRadius="4"
+                                        Padding="8,6"
+                                        CanDrag="True"
+                                        DragStarting="AppTag_DragStarting">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <FontIcon Glyph="{x:Bind IconGlyph}" FontSize="14"/>
+                                        <TextBlock Text="{x:Bind DisplayName}" 
+                                                   FontSize="13"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   MaxWidth="150"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+        
+        <!-- 右侧：Cluster 桶列表 -->
+        <ScrollViewer Grid.Column="1">
+            <StackPanel x:Name="ClusterBucketsPanel" Spacing="12"/>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

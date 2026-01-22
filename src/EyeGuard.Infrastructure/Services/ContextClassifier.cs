@@ -400,4 +400,86 @@ public class ContextClassifier
             _ => "未知"
         };
     }
+    
+    // ===== Limit 3.0: 工作流簇集成 =====
+    
+    // 记录上一次的簇 ID，用于计算切换惩罚
+    private static int? _lastClusterId = null;
+    private static string? _lastProcessName = null;
+    
+    /// <summary>
+    /// 计算上下文切换惩罚（Limit 3.0）
+    /// 簇内切换惩罚 = 0，簇外切换惩罚 > 0
+    /// </summary>
+    /// <param name="currentClusterId">当前簇 ID（null 表示不属于任何簇）</param>
+    /// <param name="currentProcessName">当前进程名</param>
+    /// <returns>切换惩罚值（0-1，可累加到疲劳增量）</returns>
+    public static double CalculateSwitchPenalty(int? currentClusterId, string currentProcessName)
+    {
+        // 首次调用，无惩罚
+        if (_lastProcessName == null)
+        {
+            _lastClusterId = currentClusterId;
+            _lastProcessName = currentProcessName;
+            return 0;
+        }
+        
+        // 同一进程，无切换
+        if (_lastProcessName.Equals(currentProcessName, StringComparison.OrdinalIgnoreCase))
+        {
+            return 0;
+        }
+        
+        double penalty = 0;
+        
+        // 判断是否簇内切换
+        if (_lastClusterId.HasValue && currentClusterId.HasValue)
+        {
+            if (_lastClusterId.Value == currentClusterId.Value)
+            {
+                // 簇内切换：无惩罚
+                penalty = 0;
+            }
+            else
+            {
+                // 跨簇切换：中等惩罚
+                penalty = 0.5;
+            }
+        }
+        else if (_lastClusterId.HasValue || currentClusterId.HasValue)
+        {
+            // 从簇内到簇外或反之：轻微惩罚
+            penalty = 0.3;
+        }
+        else
+        {
+            // 两个都不属于任何簇：视为碎片化切换
+            penalty = 0.8;
+        }
+        
+        // 更新状态
+        _lastClusterId = currentClusterId;
+        _lastProcessName = currentProcessName;
+        
+        return penalty;
+    }
+    
+    /// <summary>
+    /// 重置切换状态（用于新会话或测试）
+    /// </summary>
+    public static void ResetSwitchState()
+    {
+        _lastClusterId = null;
+        _lastProcessName = null;
+    }
+    
+    /// <summary>
+    /// 获取上一个簇 ID
+    /// </summary>
+    public static int? GetLastClusterId() => _lastClusterId;
+    
+    /// <summary>
+    /// 获取上一个进程名
+    /// </summary>
+    public static string? GetLastProcessName() => _lastProcessName;
 }

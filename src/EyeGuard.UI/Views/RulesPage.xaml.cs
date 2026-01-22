@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using EyeGuard.Infrastructure.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EyeGuard.UI.Views;
 
@@ -11,28 +12,19 @@ namespace EyeGuard.UI.Views;
 public sealed partial class RulesPage : Page
 {
     private readonly SettingsService _settingsService;
+    private readonly ClusterService _clusterService;
 
     public RulesPage()
     {
         InitializeComponent();
         _settingsService = SettingsService.Instance;
+        _clusterService = App.Services.GetRequiredService<ClusterService>();
         LoadSettings();
-        UpdateModeVisibility();
     }
 
     private void LoadSettings()
     {
         var settings = _settingsService.Settings;
-        
-        // 模式选择
-        SmartModeRadio.IsChecked = settings.IsSmartMode;
-        SimpleModeRadio.IsChecked = !settings.IsSmartMode;
-        
-        // 简单模式设置
-        MicroBreakIntervalBox.Value = settings.MicroBreakIntervalMinutes;
-        MicroBreakDurationBox.Value = settings.MicroBreakDurationSeconds;
-        LongBreakIntervalBox.Value = settings.LongBreakIntervalMinutes;
-        LongBreakDurationBox.Value = settings.LongBreakDurationMinutes;
         
         // 智能模式设置
         SoftReminderSlider.Value = settings.SoftReminderThreshold;
@@ -52,43 +44,22 @@ public sealed partial class RulesPage : Page
         // 提醒设置
         EnableRemindersToggle.IsOn = settings.EnableReminders;
         ReminderTypeCombo.SelectedIndex = settings.ReminderType;
-    }
-
-    private void ModeRadio_Checked(object sender, RoutedEventArgs e)
-    {
-        UpdateModeVisibility();
-    }
-
-    private void UpdateModeVisibility()
-    {
-        if (SimpleModePanel == null || SmartModePanel == null) return;
         
-        bool isSmartMode = SmartModeRadio?.IsChecked == true;
-        
-        SimpleModePanel.Visibility = isSmartMode ? Visibility.Collapsed : Visibility.Visible;
-        SmartModePanel.Visibility = isSmartMode ? Visibility.Visible : Visibility.Collapsed;
-        
-        // 更新模式描述
-        if (ModeDescriptionText != null)
-        {
-            ModeDescriptionText.Text = isSmartMode
-                ? "智能模式通过检测键鼠活动、音频播放等多种方式自动判断您是否在使用电脑，并动态计算疲劳值。推荐使用。"
-                : "简单模式使用固定的时间间隔提醒休息，不进行智能检测。适合希望简单设置的用户。";
-        }
+        // 高级设置
+        TrayIconToggle.IsOn = settings.ShowTrayIcon;
+        AutoStartToggle.IsOn = settings.AutoStartOnBoot;
+        SnapshotIntervalSlider.Value = settings.FatigueSnapshotIntervalSeconds;
+        SnapshotIntervalText.Text = $"{settings.FatigueSnapshotIntervalSeconds}秒";
+        ChartIntervalSlider.Value = settings.FatigueChartIntervalMinutes;
+        ChartIntervalText.Text = $"{settings.FatigueChartIntervalMinutes}分钟";
     }
 
     private async void SaveButton_Click(object sender, RoutedEventArgs e)
     {
         _settingsService.UpdateAndSave(settings =>
         {
-            // 模式
-            settings.IsSmartMode = SmartModeRadio?.IsChecked == true;
-            
-            // 简单模式设置
-            settings.MicroBreakIntervalMinutes = (int)MicroBreakIntervalBox.Value;
-            settings.MicroBreakDurationSeconds = (int)MicroBreakDurationBox.Value;
-            settings.LongBreakIntervalMinutes = (int)LongBreakIntervalBox.Value;
-            settings.LongBreakDurationMinutes = (int)LongBreakDurationBox.Value;
+            // 智能模式设置（永久启用）
+            settings.IsSmartMode = true;
             
             // 智能模式设置
             settings.SoftReminderThreshold = (int)SoftReminderSlider.Value;
@@ -100,12 +71,92 @@ public sealed partial class RulesPage : Page
             // 提醒设置
             settings.EnableReminders = EnableRemindersToggle.IsOn;
             settings.ReminderType = ReminderTypeCombo.SelectedIndex;
+            
+            // 高级设置
+            settings.ShowTrayIcon = TrayIconToggle.IsOn;
+            settings.AutoStartOnBoot = AutoStartToggle.IsOn;
+            settings.FatigueSnapshotIntervalSeconds = (int)SnapshotIntervalSlider.Value;
+            settings.FatigueChartIntervalMinutes = (int)ChartIntervalSlider.Value;
         });
 
         SaveStatusText.Text = "✓ 设置已保存";
+        System.Diagnostics.Debug.WriteLine($"[RulesPage] 设置已保存: IdleThreshold={_settingsService.Settings.IdleThresholdSeconds}s");
         
         // 3秒后清除提示
         await Task.Delay(3000);
         SaveStatusText.Text = "";
+    }
+    
+    private async void ResetClusters_Click(object sender, RoutedEventArgs e)
+    {
+        // 显示确认对话框
+        var dialog = new ContentDialog
+        {
+            Title = "恢复默认分类",
+            Content = "确定要恢复所有应用分类为默认设置吗？此操作不可撤销。",
+            PrimaryButtonText = "确定",
+            CloseButtonText = "取消",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = this.XamlRoot
+        };
+        
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary)
+        {
+            await _clusterService.ResetToDefaultAsync();
+            
+            // 刷新 ClusterEditor 显示
+            if (ClusterEditor != null)
+            {
+                await ClusterEditor.RefreshAsync();
+            }
+        }
+    }
+    
+    private async void ResetAllSettings_Click(object sender, RoutedEventArgs e)
+    {
+        // 显示确认对话框
+        var dialog = new ContentDialog
+        {
+            Title = "恢复默认设置",
+            Content = "确定要恢复所有规则设置为默认值吗？此操作不可撤销。",
+            PrimaryButtonText = "确定",
+            CloseButtonText = "取消",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = this.XamlRoot
+        };
+        
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary)
+        {
+            // 使用 UserSettings 的 ResetToDefault 方法
+            _settingsService.Settings.ResetToDefault();
+            _settingsService.Save();
+            
+            // 重新加载 UI
+            LoadSettings();
+            
+            SaveStatusText.Text = "✓ 已恢复默认设置";
+            await Task.Delay(3000);
+            SaveStatusText.Text = "";
+        }
+    }
+    
+    // ===== 高级设置事件处理 =====
+    
+    private void SnapshotIntervalSlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (SnapshotIntervalText != null)
+        {
+            SnapshotIntervalText.Text = $"{(int)e.NewValue}秒";
+        }
+    }
+    
+    private void ChartIntervalSlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (ChartIntervalText != null)
+        {
+            ChartIntervalText.Text = $"{(int)e.NewValue}分钟";
+        }
     }
 }

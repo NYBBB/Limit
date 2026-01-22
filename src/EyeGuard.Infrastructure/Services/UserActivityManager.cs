@@ -1,6 +1,7 @@
 namespace EyeGuard.Infrastructure.Services;
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using EyeGuard.Core.Models;
 
@@ -15,11 +16,23 @@ public class UserActivityManager : IDisposable
     private readonly FatigueEngine _fatigueEngine;
     
     private bool _disposed;
+    
+    // ===== Limit 3.0: 活跃检测增强 =====
+    private bool _isFullscreen = false;
+    private string _currentProcessName = "";
+    private int _audioSilentSeconds = 0;  // 音频静音累积秒数（去抖用）
+    private const int AudioDebounceSeconds = 5;  // 音频静音超过5秒才算真正停止
 
     /// <summary>
     /// 当前用户状态。
     /// </summary>
     public UserActivityState CurrentState { get; private set; } = UserActivityState.Idle;
+    
+    /// <summary>
+    /// Limit 3.0: 是否为被动消耗模式（看视频/全屏但无输入）
+    /// </summary>
+    public bool IsPassiveConsumption => CurrentState == UserActivityState.PassiveConsumption 
+                                        || CurrentState == UserActivityState.MediaMode;
 
     /// <summary>
     /// 默认空闲阈值（秒）- 无音频时。
@@ -35,6 +48,16 @@ public class UserActivityManager : IDisposable
     /// 离开阈值（秒）- 超过此时间认为用户离开。
     /// </summary>
     public int AwayThresholdSeconds { get; set; } = 300;
+    
+    /// <summary>
+    /// Limit 3.0: 当前是否全屏
+    /// </summary>
+    public bool IsFullscreen => _isFullscreen;
+    
+    /// <summary>
+    /// Limit 3.0: 当前进程名
+    /// </summary>
+    public string CurrentProcessName => _currentProcessName;
 
     /// <summary>
     /// 疲劳引擎实例。
@@ -81,11 +104,14 @@ public class UserActivityManager : IDisposable
     /// </summary>
     public event EventHandler<UserActivityState>? StateChanged;
 
-    public UserActivityManager()
+    /// <summary>
+    /// Phase 7: 构造函数 - 使用 DI 注入 FatigueEngine 保证单例
+    /// </summary>
+    public UserActivityManager(FatigueEngine fatigueEngine, GlobalInputMonitor inputMonitor, AudioDetector audioDetector)
     {
-        _inputMonitor = new GlobalInputMonitor();
-        _audioDetector = new AudioDetector();
-        _fatigueEngine = new FatigueEngine();
+        _fatigueEngine = fatigueEngine;
+        _inputMonitor = inputMonitor;
+        _audioDetector = audioDetector;
     }
 
     /// <summary>
@@ -108,6 +134,7 @@ public class UserActivityManager : IDisposable
 
     /// <summary>
     /// 每秒调用一次，更新状态和疲劳值。
+    /// Limit 3.0: 活跃检测公式 IsActive = (Input || (Audio && MediaApp) || Fullscreen)
     /// </summary>
     public void Tick()
     {
@@ -119,41 +146,66 @@ public class UserActivityManager : IDisposable
         double idleSeconds = _inputMonitor.IdleSeconds;
         bool isAudioPlaying = _audioDetector.IsAudioPlaying;
         
-        // 确定当前空闲阈值
-        int currentIdleThreshold = isAudioPlaying 
-            ? MediaModeIdleThresholdSeconds 
-            : DefaultIdleThresholdSeconds;
+        // Phase 7 修复：直接从 SettingsService 读取设置（不再使用硬编码或事件同步）
+        var settings = SettingsService.Instance.Settings;
+        int idleThreshold = settings.IdleThresholdSeconds;
+        int mediaIdleThreshold = idleThreshold * 2;  // 媒体模式阈值为普通阈值的2倍
+        
+        // Limit 3.0: 音频去抖逻辑（修复状态横跳）
+        // 音频可能因为视频静音片段导致瞬间静音，需要缓冲
+        if (isAudioPlaying)
+        {
+            _audioSilentSeconds = 0;  // 有音频，重置静音计数
+        }
+        else
+        {
+            _audioSilentSeconds++;  // 静音累积
+        }
+        
+        // 判定是否有持续音频（5秒内有过音频就认为有）
+        bool hasAudio = (_audioSilentSeconds < AudioDebounceSeconds);
+        
+        // Limit 3.0: 活跃检测公式
+        bool isPassivelyActive = hasAudio || _isFullscreen;
+        
+        // 确定当前空闲阈值（直接使用设置值）
+        int currentIdleThreshold = (hasAudio || _isFullscreen)
+            ? mediaIdleThreshold 
+            : idleThreshold;
 
         // 状态机逻辑
         var previousState = CurrentState;
         
-        // 判定逻辑：
-        // - idleSeconds < currentIdleThreshold: 用户活跃（正在工作或看视频）
-        // - idleSeconds >= currentIdleThreshold: 用户空闲
-        // - idleSeconds >= AwayThresholdSeconds: 用户离开
+        // Phase 7 修复：使用设置的空闲阈值判断 hasRecentInput
+        // 原来硬编码为 2 秒，现在正确使用设置
+        bool hasRecentInput = idleSeconds < idleThreshold;
         
-        if (idleSeconds < currentIdleThreshold)
+        // Limit 3.0 判定逻辑（修复状态横跳问题）：
+        // 1. 有输入（idleSeconds < idleThreshold）-> Active
+        // 2. 无输入但有音频/全屏，且未超过阈值 -> PassiveConsumption (低负载，不恢复)
+        // 3. 无输入无音频，超过空闲阈值 -> Idle (恢复疲劳)
+        // 4. 长时间无活动 -> Away (快速恢复)
+        
+        if (hasRecentInput)
         {
-            // 未超过空闲阈值 - 用户活跃
-            if (isAudioPlaying && idleSeconds > 5)
-            {
-                // 有音频但无输入超过5秒：媒体模式（看视频/听音乐）
-                CurrentState = UserActivityState.MediaMode;
-                TodayActiveSeconds++;
-                _fatigueEngine.IncreaseFatigue(1, isMediaMode: true);
-            }
-            else
-            {
-                // 正常工作状态
-                CurrentState = UserActivityState.Active;
-                CurrentSessionSeconds++;
-                TodayActiveSeconds++;
-                _fatigueEngine.IncreaseFatigue(1, isMediaMode: false);
-            }
+            // 有物理输入 - 主动工作状态
+            CurrentState = UserActivityState.Active;
+            CurrentSessionSeconds++;
+            TodayActiveSeconds++;
+            _fatigueEngine.IncreaseFatigue(1, isMediaMode: false);
+        }
+        else if (isPassivelyActive && idleSeconds < currentIdleThreshold)
+        {
+            // 无输入但有音频/全屏，且未超过阈值 - 被动消耗状态 (Limit 3.0)
+            // 关键修复：看视频不再被当成空闲！
+            CurrentState = UserActivityState.PassiveConsumption;
+            TodayActiveSeconds++;
+            // 被动消耗：低负载疲劳增长，不恢复
+            _fatigueEngine.IncreaseFatigue(1, isMediaMode: true, reasonCode: "PASSIVE_CONSUMPTION");
         }
         else if (idleSeconds < AwayThresholdSeconds)
         {
-            // 空闲状态（超过空闲阈值但未离开）
+            // 真正的空闲状态（无输入、无音频或音频超时、非全屏）
             CurrentState = UserActivityState.Idle;
             CurrentSessionSeconds = 0;
             
@@ -214,9 +266,50 @@ public class UserActivityManager : IDisposable
         {
             UserActivityState.Active => "正在工作中",
             UserActivityState.MediaMode => "媒体模式（看视频/听音乐）",
+            UserActivityState.PassiveConsumption => "被动消耗（全屏/音频）",  // Limit 3.0
             UserActivityState.Idle => "用户空闲，正在恢复...",
             UserActivityState.Away => "用户已离开",
             _ => "未知状态"
+        };
+    }
+    
+    // ===== Limit 3.0: 全屏检测与状态设置 =====
+    
+    /// <summary>
+    /// 设置当前全屏状态（由外部窗口检测调用）
+    /// </summary>
+    public void SetFullscreenState(bool isFullscreen)
+    {
+        _isFullscreen = isFullscreen;
+    }
+    
+    /// <summary>
+    /// 设置当前进程名（由外部窗口检测调用）
+    /// </summary>
+    public void SetCurrentProcess(string processName)
+    {
+        _currentProcessName = processName;
+    }
+    
+    /// <summary>
+    /// Limit 3.0: 获取调试信息字典
+    /// </summary>
+    public Dictionary<string, string> GetDebugInfo()
+    {
+        return new Dictionary<string, string>
+        {
+            ["状态"] = GetStateDescription(),
+            ["空闲秒数"] = $"{_inputMonitor.IdleSeconds:F1}s",
+            ["音频播放"] = _audioDetector.IsAudioPlaying ? "是" : "否",
+            ["全屏"] = _isFullscreen ? "是" : "否",
+            ["被动消耗"] = IsPassiveConsumption ? "是" : "否",
+            ["疲劳值"] = $"{_fatigueEngine.FatigueValue:F1}%",
+            ["敏感度偏差"] = $"{_fatigueEngine.SensitivityBias:P0}",
+            ["关怀模式"] = _fatigueEngine.IsCareMode ? "开启" : "关闭",
+            ["疲劳斜率"] = $"{_fatigueEngine.FatigueSlope:F2}%/分",
+            ["当前进程"] = string.IsNullOrEmpty(_currentProcessName) ? "未知" : _currentProcessName,
+            ["今日活跃"] = $"{TodayActiveSeconds / 60}分钟",
+            ["连续工作"] = $"{CurrentSessionSeconds / 60}分钟"
         };
     }
 

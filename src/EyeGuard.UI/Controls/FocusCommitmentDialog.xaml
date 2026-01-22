@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- 
+    FocusCommitmentDialog.xaml - 专注承诺设定盘
+    Phase 9: Focus Commitment
+-->
+<ContentDialog
+    x:Class="EyeGuard.UI.Controls.FocusCommitmentDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="设定专注时间"
+    PrimaryButtonText="开始专注"
+    CloseButtonText="取消"
+    DefaultButton="Primary"
+    PrimaryButtonClick="OnPrimaryButtonClick">
+
+    <StackPanel Spacing="24" MinWidth="320">
+        <!-- 时间选择 -->
+        <StackPanel Spacing="8">
+            <TextBlock Text="专注时长" FontWeight="SemiBold"/>
+            
+            <!-- 预设时间按钮 -->
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <RadioButton x:Name="Time15" Content="15分钟" GroupName="FocusTime" Tag="15" Checked="OnPresetTimeChecked"/>
+                <RadioButton x:Name="Time30" Content="30分钟" GroupName="FocusTime" Tag="30" IsChecked="True" Checked="OnPresetTimeChecked"/>
+                <RadioButton x:Name="Time45" Content="45分钟" GroupName="FocusTime" Tag="45" Checked="OnPresetTimeChecked"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <RadioButton x:Name="Time60" Content="60分钟" GroupName="FocusTime" Tag="60" Checked="OnPresetTimeChecked"/>
+                <RadioButton x:Name="Time90" Content="90分钟" GroupName="FocusTime" Tag="90" Checked="OnPresetTimeChecked"/>
+            </StackPanel>
+            
+            <!-- 自定义时间滑块 -->
+            <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Slider x:Name="CustomTimeSlider" 
+                        Minimum="5" Maximum="120" Value="30"
+                        TickFrequency="5" TickPlacement="BottomRight"
+                        ValueChanged="OnSliderValueChanged"/>
+                <TextBlock x:Name="SliderValueText" 
+                           Grid.Column="1" 
+                           Text="30分钟" 
+                           VerticalAlignment="Center"
+                           Margin="12,0,0,0"
+                           FontWeight="SemiBold"
+                           MinWidth="60"/>
+            </Grid>
+        </StackPanel>
+        
+        <!-- 任务描述 -->
+        <StackPanel Spacing="8">
+            <TextBlock Text="我要做..." FontWeight="SemiBold"/>
+            <AutoSuggestBox x:Name="TaskInput"
+                            PlaceholderText="例如：写作业、完成报告..."
+                            QueryIcon="Find">
+            </AutoSuggestBox>
+        </StackPanel>
+        
+        <!-- 提示信息 -->
+        <Border Background="{ThemeResource LayerFillColorDefaultBrush}" 
+                CornerRadius="6" Padding="12">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <FontIcon Glyph="&#xE946;" FontSize="14" 
+                          Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                <TextBlock Text="专注期间，外环将显示剩余时间，内环继续显示疲劳值。"
+                           FontSize="12" TextWrapping="Wrap"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</ContentDialog>

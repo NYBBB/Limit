@@ -4,6 +4,9 @@ using EyeGuard.UI.ViewModels;
 using EyeGuard.Infrastructure.Services;
 using EyeGuard.Infrastructure.Monitors;
 using EyeGuard.Core.Interfaces;
+using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
+using SkiaSharp;
 
 namespace EyeGuard.UI;
 
@@ -30,8 +33,22 @@ public partial class App : Application
     {
         InitializeComponent();
         
+        // 配置 LiveCharts2 全局中文字体
+        ConfigureLiveCharts();
+        
         // 配置依赖注入
         Services = ConfigureServices();
+    }
+    
+    /// <summary>
+    /// 配置 LiveCharts2 使用中文字体
+    /// </summary>
+    private void ConfigureLiveCharts()
+    {
+        LiveCharts.Configure(config =>
+            config
+                .HasGlobalSKTypeface(SKTypeface.FromFamilyName("Microsoft YaHei"))
+        );
     }
 
     /// <summary>
@@ -46,6 +63,17 @@ public partial class App : Application
         // 启动窗口追踪
         var tracker = Services.GetRequiredService<IWindowTracker>();
         tracker.Start();
+        
+        // Limit 3.0: 初始化 ClusterService（加载预设簇）
+        var clusterService = Services.GetRequiredService<ClusterService>();
+        _ = clusterService.InitializeAsync(); // Fire and forget
+        
+        // Phase 6: 启动数据聚合服务（聚合过期的热数据）
+        var aggregationService = Services.GetRequiredService<DataAggregationService>();
+        _ = aggregationService.RunDailyAggregationAsync(); // Fire and forget
+        // Limit 3.0: 启动通知服务
+        var toastService = Services.GetRequiredService<EyeGuard.UI.Services.ToastNotificationService>();
+        toastService.Initialize();
 
         // 创建并显示主窗口
         MainWindow = new MainWindow();
@@ -61,21 +89,38 @@ public partial class App : Application
         
         // ===== 核心服务 =====
         services.AddSingleton<DatabaseService>();
+        // 使用工厂方法注册单例（因为构造函数是私有的）
+        services.AddSingleton(sp => SettingsService.Instance);
         services.AddSingleton<IWindowTracker, WindowTracker>();
         services.AddSingleton<UsageCollectorService>();
+        services.AddSingleton<ClusterService>();
         
-        // TODO: 注册输入监测服务
-        // services.AddSingleton<IInputMonitor, GlobalInputHook>();
+        // ===== 硬件监控 =====
+        services.AddSingleton<GlobalInputMonitor>();
+        services.AddSingleton<IInputMonitor>(sp => sp.GetRequiredService<GlobalInputMonitor>());
+        services.AddSingleton<AudioDetector>();
         
-        // TODO: 注册疲劳引擎
-        // services.AddSingleton<IFatigueEngine, FatigueEngine>();
+        // ===== 业务逻辑 =====
+        services.AddSingleton<FatigueEngine>();
+        // Phase 7: UserActivityManager 使用 DI 注入依赖
+        services.AddSingleton<UserActivityManager>(sp => new UserActivityManager(
+            sp.GetRequiredService<FatigueEngine>(),
+            sp.GetRequiredService<GlobalInputMonitor>(),
+            sp.GetRequiredService<AudioDetector>()
+        ));
+        services.AddSingleton<ForecastService>();
+        services.AddSingleton<BreakTaskService>();
+        services.AddSingleton<InterventionPolicy>();
         
-        // TODO: 注册休息调度器
-        // services.AddSingleton<IBreakScheduler, BreakScheduler>();
+        // ===== Phase 6: 数据聚合 =====
+        services.AddSingleton<DataAggregationService>();
+        
+        // ===== UI 服务 =====
+        services.AddSingleton<EyeGuard.UI.Services.ToastNotificationService>();
         
         // ===== 视图模型 =====
-        services.AddTransient<DashboardViewModel>();
-        // services.AddTransient<SettingsViewModel>();
+        services.AddTransient(sp => DashboardViewModel.Instance);
+        services.AddTransient(sp => DashboardViewModel3.Instance);
         
         return services.BuildServiceProvider();
     }

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- 
+    ContextCard.xaml - Limit 3.0 上下文感知卡片
+    Zone B: Context Monitor
+    Phase 2.5: 增强版 - 添加 Session Timer 和 Segmented Control
+-->
+<UserControl
+    x:Class="EyeGuard.UI.Controls.ContextCard"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:EyeGuard.UI.Controls">
+
+    <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="16"
+            Padding="20">
+        <!-- 添加阴影 -->
+        <Border.Shadow>
+            <ThemeShadow/>
+        </Border.Shadow>
+        
+        <Grid RowSpacing="12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            
+            <!-- Header -->
+            <TextBlock Grid.Row="0"
+                       Text="当前上下文"
+                       FontSize="11"
+                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                       FontWeight="SemiBold"
+                       CharacterSpacing="80"/>
+            
+            <!-- Main Content - 放大图标和文字 -->
+            <Grid Grid.Row="1" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- 应用图标 + 时间流 -->
+                <Grid Grid.Column="0" Margin="0,0,16,0">
+                    <!-- 当前应用图标 - 56px -->
+                    <Border Width="56" Height="56" 
+                            CornerRadius="12"
+                            Background="{ThemeResource ControlAltFillColorSecondaryBrush}">
+                        <FontIcon Glyph="{x:Bind AppIcon, Mode=OneWay}" 
+                                  FontSize="28"
+                                  Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"/>
+                    </Border>
+                    
+                    <!-- 时间流小图标（右下角堆叠） -->
+                    <StackPanel Orientation="Horizontal" 
+                                HorizontalAlignment="Right" 
+                                VerticalAlignment="Bottom"
+                                Margin="0,0,-8,0">
+                        <Border Width="20" Height="20" CornerRadius="10"
+                                Background="{ThemeResource ControlAltFillColorSecondaryBrush}"
+                                Visibility="{x:Bind RecentApp3IconVisibility, Mode=OneWay}"
+                                Opacity="0.4" Margin="0,0,-6,0">
+                            <FontIcon Glyph="{x:Bind RecentApp3Icon, Mode=OneWay}" FontSize="10"/>
+                        </Border>
+                        <Border Width="22" Height="22" CornerRadius="11"
+                                Background="{ThemeResource ControlAltFillColorSecondaryBrush}"
+                                Visibility="{x:Bind RecentApp2IconVisibility, Mode=OneWay}"
+                                Opacity="0.6" Margin="0,0,-6,0">
+                            <FontIcon Glyph="{x:Bind RecentApp2Icon, Mode=OneWay}" FontSize="11"/>
+                        </Border>
+                        <Border Width="24" Height="24" CornerRadius="12"
+                                Background="{ThemeResource ControlAltFillColorSecondaryBrush}"
+                                Visibility="{x:Bind RecentApp1IconVisibility, Mode=OneWay}"
+                                Opacity="0.8">
+                            <FontIcon Glyph="{x:Bind RecentApp1Icon, Mode=OneWay}" FontSize="12"/>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+                
+                <!-- 应用名称 + Cluster + Session Timer -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                    <!-- 应用名称 -->
+                    <TextBlock Text="{x:Bind AppName, Mode=OneWay}"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis"
+                               MaxLines="1"/>
+                    
+                    <!-- Cluster 标签 -->
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Ellipse Width="8" Height="8" 
+                                 Fill="{x:Bind ClusterColor, Mode=OneWay}"/>
+                        <TextBlock Text="{x:Bind ClusterName, Mode=OneWay}"
+                                   FontSize="12"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                    
+                    <!-- Session Timer - 巨大计时器 -->
+                    <TextBlock Text="{x:Bind SessionTime, Mode=OneWay}"
+                               FontSize="28"
+                               FontWeight="Bold"
+                               FontFamily="Segoe UI Variable Display"
+                               Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                               Margin="0,8,0,0"/>
+                </StackPanel>
+            </Grid>
+            
+            <!-- Focusing/Chilling Segmented Control -->
+            <Border Grid.Row="2"
+                    Background="{ThemeResource ControlAltFillColorTertiaryBrush}"
+                    CornerRadius="8"
+                    Padding="4"
+                    Height="40">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- 放松按钮 -->
+                    <Button Grid.Column="0"
+                            Content="放松"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Click="ChillingButton_Click"
+                            Background="{x:Bind ChillingBackground, Mode=OneWay}"
+                            Foreground="{x:Bind ChillingForeground, Mode=OneWay}"
+                            CornerRadius="6"
+                            BorderThickness="0"
+                            Margin="0,0,2,0"/>
+                    
+                    <!-- 专注按钮 -->
+                    <Button Grid.Column="1"
+                            Content="专注"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Click="FocusingButton_Click"
+                            Background="{x:Bind FocusingBackground, Mode=OneWay}"
+                            Foreground="{x:Bind FocusingForeground, Mode=OneWay}"
+                            CornerRadius="6"
+                            BorderThickness="0"
+                            Margin="2,0,0,0"/>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

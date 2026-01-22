@@ -99,39 +99,40 @@ public sealed partial class BreakOverlayWindow : Window
         FatigueText.Text = $"{fatigueValue}%";
         UpdateCountdownDisplay();
         
-        // 根据疲劳值设置标题
+        // Phase 5: Overlay 3.0 新文案（根据疲劳值调整语气）
         if (fatigueValue >= 80)
         {
-            TitleText.Text = "⚠️ 疲劳度过高！";
-            SubtitleText.Text = "强烈建议您立即休息";
+            TitleText.Text = "Diminishing Returns";
+            SubtitleText.Text = "继续工作的效率正在急剧下降";
         }
         else if (fatigueValue >= 60)
         {
-            TitleText.Text = "该休息了！";
-            SubtitleText.Text = "您已经连续工作了一段时间";
+            TitleText.Text = "Time for a Break";
+            SubtitleText.Text = "短暂休息可以帮助恢复专注力";
         }
         else
         {
-            TitleText.Text = "休息一下吧";
+            TitleText.Text = "Quick Rest";
             SubtitleText.Text = "让眼睛放松一会儿";
         }
         
         this.Activate();
         
-        // 自动开始倒计时
-        StartCountdown();
+        // 不自动开始倒计时，等用户点击 Step Away
     }
 
     /// <summary>
-    /// 开始倒计时。
+    /// 开始倒计时（用户点击 Step Away 后触发）。
     /// </summary>
     private void StartCountdown()
     {
-        StatusText.Text = "休息中...";
-        TipText.Text = "请远眺窗外或闭眼休息";
+        TipText.Text = "请远眺窗外或闭眼休息...";
         
-        // 隐藏"开始休息"按钮
+        // 隐藏按钮区，显示倒计时
         StartBreakButton.Visibility = Visibility.Collapsed;
+        SkipButton.Visibility = Visibility.Collapsed;
+        HoldProgressPanel.Visibility = Visibility.Collapsed;
+        CountdownPanel.Visibility = Visibility.Visible;
         
         _countdownTimer = new DispatcherTimer();
         _countdownTimer.Interval = TimeSpan.FromSeconds(1);
@@ -160,22 +161,6 @@ public sealed partial class BreakOverlayWindow : Window
         CountdownText.Text = $"{minutes}:{seconds:D2}";
     }
 
-    private void SkipButton_Click(object sender, RoutedEventArgs e)
-    {
-        _countdownTimer?.Stop();
-        UserAction = BreakAction.Skipped;
-        BreakCompleted?.Invoke(this, UserAction);
-        this.Close();
-    }
-
-    private void SnoozeButton_Click(object sender, RoutedEventArgs e)
-    {
-        _countdownTimer?.Stop();
-        UserAction = BreakAction.Snoozed;
-        BreakCompleted?.Invoke(this, UserAction);
-        this.Close();
-    }
-
     private void StartBreakButton_Click(object sender, RoutedEventArgs e)
     {
         // 如果用户想手动开始（虽然现在自动开始了）
@@ -195,10 +180,92 @@ public sealed partial class BreakOverlayWindow : Window
         if (e.Key == Windows.System.VirtualKey.Escape)
         {
             _countdownTimer?.Stop();
+            _holdTimer?.Stop();
             UserAction = BreakAction.Skipped;
             BreakCompleted?.Invoke(this, UserAction);
             this.Close();
         }
+    }
+    
+    // ===== Phase 5: 长按 3 秒解锁逻辑 =====
+    
+    private DispatcherTimer? _holdTimer;
+    private int _holdProgress = 0;
+    private const int HoldDurationMs = 3000;  // 3 秒
+    private const int HoldTickMs = 50;        // 每 50ms 更新一次
+    
+    private void SkipButton_PointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        // 开始长按计时
+        _holdProgress = 0;
+        HoldProgressPanel.Visibility = Visibility.Visible;
+        HoldProgressBar.Value = 0;
+        HoldStatusText.Text = "继续按住...";
+        
+        _holdTimer = new DispatcherTimer();
+        _holdTimer.Interval = TimeSpan.FromMilliseconds(HoldTickMs);
+        _holdTimer.Tick += HoldTimer_Tick;
+        _holdTimer.Start();
+        
+        Debug.WriteLine("[Overlay] Hold started");
+    }
+    
+    private void SkipButton_PointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        CancelHold();
+    }
+    
+    private void SkipButton_PointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        CancelHold();
+    }
+    
+    private void CancelHold()
+    {
+        _holdTimer?.Stop();
+        _holdProgress = 0;
+        HoldProgressBar.Value = 0;
+        HoldProgressPanel.Visibility = Visibility.Collapsed;
+        
+        Debug.WriteLine("[Overlay] Hold cancelled");
+    }
+    
+    private void HoldTimer_Tick(object? sender, object e)
+    {
+        _holdProgress += HoldTickMs;
+        var progressPercent = (_holdProgress * 100.0) / HoldDurationMs;
+        
+        HoldProgressBar.Value = progressPercent;
+        HoldStatusText.Text = $"继续按住... ({_holdProgress / 1000.0:F1}s / 3s)";
+        
+        if (_holdProgress >= HoldDurationMs)
+        {
+            // 完成长按，跳过休息
+            _holdTimer?.Stop();
+            _countdownTimer?.Stop();
+            
+            Debug.WriteLine("[Overlay] Hold completed - skipping");
+            
+            UserAction = BreakAction.Skipped;
+            BreakCompleted?.Invoke(this, UserAction);
+            this.Close();
+        }
+    }
+    
+    private void SkipButton_Click(object sender, RoutedEventArgs e)
+    {
+        // 兼容旧代码，但长按逻辑由 PointerPressed 处理
+        // 普通点击不执行任何操作，提示用户长按
+        TipText.Text = "请长按 \"I Must Finish\" 按钮 3 秒才能跳过";
+    }
+    
+    private void SnoozeButton_Click(object sender, RoutedEventArgs e)
+    {
+        _countdownTimer?.Stop();
+        _holdTimer?.Stop();
+        UserAction = BreakAction.Snoozed;
+        BreakCompleted?.Invoke(this, UserAction);
+        this.Close();
     }
 }
 

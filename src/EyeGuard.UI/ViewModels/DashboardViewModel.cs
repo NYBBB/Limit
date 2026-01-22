@@ -40,7 +40,6 @@ public partial class DashboardViewModel : ObservableObject
     
     // 疲劳快照保存计时器
     private int _secondsSinceLastSnapshot = 0;
-    private int _minutesSinceLastChartPoint = 0;
     
     public ObservableCollection<AppUsageItem> TodayUsageApps { get; } = new();
     
@@ -157,6 +156,32 @@ public partial class DashboardViewModel : ObservableObject
     /// </summary>
     [ObservableProperty]
     private bool _isSmartMode = true;
+    
+    // ===== Limit 3.0: 主观校准调试属性 =====
+    
+    /// <summary>
+    /// 敏感度偏差文本
+    /// </summary>
+    [ObservableProperty]
+    private string _sensitivityBiasText = "0%";
+    
+    /// <summary>
+    /// 关怀模式是否开启
+    /// </summary>
+    [ObservableProperty]
+    private string _careModeText = "关闭";
+    
+    /// <summary>
+    /// 是否为被动消耗状态
+    /// </summary>
+    [ObservableProperty]
+    private string _passiveConsumptionText = "否";
+    
+    /// <summary>
+    /// 是否全屏
+    /// </summary>
+    [ObservableProperty]
+    private string _isFullscreenText = "否";
     
     // ===== Limit 2.0: 精力预测属性 =====
     
@@ -291,8 +316,8 @@ public partial class DashboardViewModel : ObservableObject
         // 获取数据库服务
         _databaseService = App.Services.GetRequiredService<DatabaseService>();
         
-        // 初始化用户活动管理器
-        _activityManager = new UserActivityManager();
+        // Phase 7: 从 DI 获取 UserActivityManager（保证单例）
+        _activityManager = App.Services.GetRequiredService<UserActivityManager>();
         
         // 初始化预测服务
         _forecastService = new ForecastService(_activityManager.FatigueEngine);
@@ -555,6 +580,12 @@ public partial class DashboardViewModel : ObservableObject
         AudioPeakText = $"{_activityManager.AudioDetector.CurrentPeakValue:F3}";
         IsAudioPlayingText = IsAudioPlaying ? "🎵 是" : "否";
         CurrentSessionText = $"{_activityManager.CurrentSessionSeconds / 60}分{_activityManager.CurrentSessionSeconds % 60}秒";
+        
+        // ===== Limit 3.0: 主观校准调试 =====
+        SensitivityBiasText = $"{fatigue.SensitivityBias:P0}";
+        CareModeText = fatigue.IsCareMode ? "💜 开启" : "关闭";
+        PassiveConsumptionText = _activityManager.IsPassiveConsumption ? "🎬 是" : "否";
+        IsFullscreenText = _activityManager.IsFullscreen ? "📺 是" : "否";
         
         // 恢复时间估算
         double recoveryMinutes = fatigue.EstimateRecoveryTime(20);
