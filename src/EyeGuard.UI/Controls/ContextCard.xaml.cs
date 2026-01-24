@@ -77,6 +77,27 @@ public sealed partial class ContextCard : UserControl
         set => SetValue(SessionTimeProperty, value);
     }
     
+    // Limit 3.0: 微文案属性
+    public static readonly DependencyProperty InsightIconProperty =
+        DependencyProperty.Register(nameof(InsightIcon), typeof(string), typeof(ContextCard),
+            new PropertyMetadata("💻"));
+
+    public string InsightIcon
+    {
+        get => (string)GetValue(InsightIconProperty);
+        set => SetValue(InsightIconProperty, value);
+    }
+    
+    public static readonly DependencyProperty InsightTextProperty =
+        DependencyProperty.Register(nameof(InsightText), typeof(string), typeof(ContextCard),
+            new PropertyMetadata("正常工作中"));
+
+    public string InsightText
+    {
+        get => (string)GetValue(InsightTextProperty);
+        set => SetValue(InsightTextProperty, value);
+    }
+    
     // 时间流图标属性
     public static readonly DependencyProperty RecentApp1IconProperty =
         DependencyProperty.Register(nameof(RecentApp1Icon), typeof(string), typeof(ContextCard),

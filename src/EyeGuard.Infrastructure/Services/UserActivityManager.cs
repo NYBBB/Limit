@@ -22,6 +22,21 @@ public class UserActivityManager : IDisposable
     private string _currentProcessName = "";
     private int _audioSilentSeconds = 0;  // 音频静音累积秒数（去抖用）
     private const int AudioDebounceSeconds = 5;  // 音频静音超过5秒才算真正停止
+    
+    // ===== Beta 2 (A2): 心流护盾 =====
+    private bool _isFlowMode = false;
+    private DateTime _flowModeStartTime = DateTime.MinValue;
+    private string? _flowModeApp = null;
+    private const int FlowModeThresholdSeconds = 20 * 60;  // 20 分钟
+    private const double FlowModeFatigueMultiplier = 0.8;  // 心流模式疲劳倍率
+    private const double FlowTaxPenalty = 5.0;  // 退出心流惩罚 (+5% 疲劳)
+    
+    // ===== Beta 2 (A3): 23 分钟切换恢复法则 =====
+    private bool _isRefocusing = false;
+    private DateTime _refocusStartTime = DateTime.MinValue;
+    private const int RefocusDurationSeconds = 23 * 60;  // 23 分钟
+    private const double RefocusFatigueMultiplier = 1.5;  // 重聚焦疲劳倍率
+    private int? _lastClusterId = null;
 
     /// <summary>
     /// 当前用户状态。
@@ -103,6 +118,16 @@ public class UserActivityManager : IDisposable
     /// 状态变化事件。
     /// </summary>
     public event EventHandler<UserActivityState>? StateChanged;
+    
+    /// <summary>
+    /// Beta 2 (A2): 心流模式是否激活
+    /// </summary>
+    public bool IsFlowMode => _isFlowMode;
+    
+    /// <summary>
+    /// Beta 2 (A3): 是否在重聚焦状态
+    /// </summary>
+    public bool IsRefocusing => _isRefocusing;
 
     /// <summary>
     /// Phase 7: 构造函数 - 使用 DI 注入 FatigueEngine 保证单例
@@ -192,7 +217,17 @@ public class UserActivityManager : IDisposable
             CurrentState = UserActivityState.Active;
             CurrentSessionSeconds++;
             TodayActiveSeconds++;
-            _fatigueEngine.IncreaseFatigue(1, isMediaMode: false);
+            
+            // Beta 2: 检测心流模式和重聚焦状态
+            CheckFlowMode();
+            CheckRefocusStatus();
+            
+            // 计算有效疲劳倍率
+            double fatigueMultiplier = 1.0;
+            if (_isFlowMode) fatigueMultiplier *= FlowModeFatigueMultiplier;  // A2: 心流保护
+            if (_isRefocusing) fatigueMultiplier *= RefocusFatigueMultiplier; // A3: 重聚焦惩罚
+            
+            _fatigueEngine.IncreaseFatigue(fatigueMultiplier, isMediaMode: false);
         }
         else if (isPassivelyActive && idleSeconds < currentIdleThreshold)
         {
@@ -289,6 +324,78 @@ public class UserActivityManager : IDisposable
     public void SetCurrentProcess(string processName)
     {
         _currentProcessName = processName;
+    }
+    
+    // ===== Beta 2 (A2): 心流护盾检测 =====
+    
+    /// <summary>
+    /// 检测并更新心流模式状态
+    /// </summary>
+    private void CheckFlowMode()
+    {
+        // 如果已在心流模式，检查是否需要退出
+        if (_isFlowMode)
+        {
+            // 应用切换 = 退出心流模式 + 惩罚
+            if (_currentProcessName != _flowModeApp)
+            {
+                _isFlowMode = false;
+                _fatigueEngine.SetFatigueValue(_fatigueEngine.FatigueValue + FlowTaxPenalty);
+                Debug.WriteLine($"[UserActivityManager] ⚡ Flow Shield broken! +{FlowTaxPenalty}% fatigue");
+            }
+            return;
+        }
+        
+        // 检测是否可以进入心流模式
+        // 条件：同一应用连续使用超过 20 分钟
+        if (_flowModeApp == _currentProcessName)
+        {
+            var duration = (DateTime.Now - _flowModeStartTime).TotalSeconds;
+            if (duration >= FlowModeThresholdSeconds)
+            {
+                _isFlowMode = true;
+                Debug.WriteLine($"[UserActivityManager] 🎯 Flow Shield activated for {_currentProcessName}!");
+            }
+        }
+        else
+        {
+            // 应用切换，重置计时器
+            _flowModeApp = _currentProcessName;
+            _flowModeStartTime = DateTime.Now;
+        }
+    }
+    
+    // ===== Beta 2 (A3): 23 分钟切换恢复法则 =====
+    
+    /// <summary>
+    /// 检查重聚焦状态（簇切换后 23 分钟内增加疲劳）
+    /// </summary>
+    private void CheckRefocusStatus()
+    {
+        if (_isRefocusing)
+        {
+            var elapsed = (DateTime.Now - _refocusStartTime).TotalSeconds;
+            if (elapsed >= RefocusDurationSeconds)
+            {
+                _isRefocusing = false;
+                Debug.WriteLine("[UserActivityManager] ✅ Refocusing complete (23 min)");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// 外部调用：通知簇切换（触发 A3 法则）
+    /// </summary>
+    public void NotifyClusterChange(int? newClusterId)
+    {
+        if (_lastClusterId.HasValue && newClusterId.HasValue && _lastClusterId != newClusterId)
+        {
+            // 跨簇切换，启动重聚焦计时器
+            _isRefocusing = true;
+            _refocusStartTime = DateTime.Now;
+            Debug.WriteLine($"[UserActivityManager] 🔄 Cluster switch detected - Refocusing started (23 min penalty)");
+        }
+        _lastClusterId = newClusterId;
     }
     
     /// <summary>

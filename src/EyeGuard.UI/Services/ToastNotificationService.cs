@@ -101,6 +101,30 @@ public class ToastNotificationService
     }
     
     /// <summary>
+    /// Limit 3.0: 场景 A - 久坐/长时间工作提醒
+    /// </summary>
+    public void ShowDurationWarningNotification(string appName, int minutes)
+    {
+        if (!_initialized) return;
+        
+        var title = "⚠️ 专注力正在衰减";
+        var body = $"{appName} 已经连续运行 {minutes} 分钟。现在的代码质量可能不如 20 分钟前。";
+        
+        var toast = new AppNotificationBuilder()
+            .AddText(title)
+            .AddText(body)
+            .AddButton(new AppNotificationButton("👀 微休息 (Blink Break)")
+                .AddArgument("action", "blinkBreak"))
+            .AddButton(new AppNotificationButton("⚡ 再冲 10 分钟")
+                .AddArgument("action", "push10min"))
+            .SetScenario(AppNotificationScenario.Reminder)
+            .BuildNotification();
+        
+        _notificationManager?.Show(toast);
+        Debug.WriteLine($"[Toast] Duration warning sent: {appName} - {minutes}min");
+    }
+    
+    /// <summary>
     /// 通知被点击时的回调
     /// </summary>
     private void OnNotificationInvoked(AppNotificationManager sender, AppNotificationActivatedEventArgs args)
@@ -123,8 +147,8 @@ public class ToastNotificationService
             {
                 NotificationActionInvoked?.Invoke(this, action);
                 
-                // 确保主窗口激活
-                if (action == "rest" || action == "startBreak")
+                // Limit 3.0: 场景 A 按钮 - 激活主窗口
+                if (action == "rest" || action == "startBreak" || action == "blinkBreak")
                 {
                    App.MainWindow.Activate();
                    if (App.MainWindow.Content is Microsoft.UI.Xaml.UIElement content)
@@ -132,6 +156,8 @@ public class ToastNotificationService
                        content.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
                    }
                 }
+                
+                // push10min 不激活窗口，只是重置计时器
             });
         }
     }

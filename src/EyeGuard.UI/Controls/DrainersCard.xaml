@@ -14,7 +14,7 @@
     <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             BorderThickness="1"
-            CornerRadius="16"
+            CornerRadius="{StaticResource CardCornerRadius}"
             Padding="20">
         <!-- 添加阴影 -->
         <Border.Shadow>

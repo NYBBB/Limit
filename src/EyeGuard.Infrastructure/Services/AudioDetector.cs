@@ -15,6 +15,11 @@ public class AudioDetector : IDisposable
     private AudioNativeMethods.IAudioMeterInformation? _audioMeter;
     private bool _initialized;
     private bool _disposed;
+    
+    // Limit 3.0 Beta 2: COM 调用缓存（减少断电模式卡顿）
+    private float _cachedPeakValue = 0f;
+    private DateTime _lastCheckTime = DateTime.MinValue;
+    private const int CacheMilliseconds = 1000; // 1 秒缓存
 
     /// <summary>
     /// 音频检测阈值。峰值高于此值认为有音频播放。
@@ -31,7 +36,18 @@ public class AudioDetector : IDisposable
             try
             {
                 if (!_initialized) Initialize();
-                return GetCurrentPeakValue() > AudioThreshold;
+                
+                // ===== Limit 3.0 Beta 2: 1秒缓存（减少 80% COM 调用）=====
+                var now = DateTime.Now;
+                if ((now - _lastCheckTime).TotalMilliseconds < CacheMilliseconds)
+                {
+                    return _cachedPeakValue > AudioThreshold;
+                }
+                
+                // 缓存过期，重新获取
+                _cachedPeakValue = GetCurrentPeakValue();
+                _lastCheckTime = now;
+                return _cachedPeakValue > AudioThreshold;
             }
             catch
             {
@@ -50,7 +66,17 @@ public class AudioDetector : IDisposable
             try
             {
                 if (!_initialized) Initialize();
-                return GetCurrentPeakValue();
+                
+                // ===== Limit 3.0 Beta 2: 1秒缓存 =====
+                var now = DateTime.Now;
+                if ((now - _lastCheckTime).TotalMilliseconds < CacheMilliseconds)
+                {
+                    return _cachedPeakValue;
+                }
+                
+                _cachedPeakValue = GetCurrentPeakValue();
+                _lastCheckTime = now;
+                return _cachedPeakValue;
             }
             catch
             {

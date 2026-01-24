@@ -112,6 +112,9 @@ public partial class App : Application
         services.AddSingleton<BreakTaskService>();
         services.AddSingleton<InterventionPolicy>();
         
+        // ===== Limit 3.0: Context Monitor =====
+        services.AddSingleton<ContextInsightService>();
+        
         // ===== Phase 6: 数据聚合 =====
         services.AddSingleton<DataAggregationService>();
         

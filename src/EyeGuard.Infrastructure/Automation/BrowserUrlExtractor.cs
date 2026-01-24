@@ -9,9 +9,33 @@ using FlaUI.UIA3;
 
 /// <summary>
 /// 浏览器 URL 提取器 - 通过 UI Automation 获取浏览器地址栏内容
+/// Limit 3.0 性能优化: UIA3Automation 单例模式，避免重复实例化
 /// </summary>
 public class BrowserUrlExtractor
 {
+    // ===== Limit 3.0 性能优化: 单例模式 =====
+    private static UIA3Automation? _automationInstance;
+    private static readonly object _lock = new object();
+
+    /// <summary>
+    /// 获取 UIA3Automation 单例实例（线程安全）
+    /// </summary>
+    private static UIA3Automation GetAutomationInstance()
+    {
+        if (_automationInstance == null)
+        {
+            lock (_lock)
+            {
+                if (_automationInstance == null)
+                {
+                    _automationInstance = new UIA3Automation();
+                    System.Diagnostics.Debug.WriteLine("[BrowserUrlExtractor] UIA3Automation 单例已创建");
+                }
+            }
+        }
+        return _automationInstance;
+    }
+
     /// <summary>
     /// 从浏览器窗口获取当前 URL
     /// </summary>
@@ -24,7 +48,7 @@ public class BrowserUrlExtractor
 
         try
         {
-            using var automation = new UIA3Automation();
+            var automation = GetAutomationInstance();
             var window = automation.FromHandle(windowHandle);
 
             if (window == null)

@@ -13,11 +13,33 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
             
-            <!-- 品牌色彩 -->
-            <SolidColorBrush x:Key="PrimaryBrush" Color="#8A2BE2"/>
-            <SolidColorBrush x:Key="SuccessBrush" Color="#10B981"/>
-            <SolidColorBrush x:Key="WarningBrush" Color="#F59E0B"/>
-            <SolidColorBrush x:Key="DangerBrush" Color="#EF4444"/>
+            <!-- 品牌色彩 (统一为青色 #13c8ec) -->
+            <SolidColorBrush x:Key="PrimaryBrush" Color="#13c8ec"/>
+            <SolidColorBrush x:Key="PrimaryDarkBrush" Color="#0e9ab7"/>
+            <LinearGradientBrush x:Key="PrimaryGradientBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#13c8ec" Offset="0"/>
+                <GradientStop Color="#0e9ab7" Offset="1"/>
+            </LinearGradientBrush>
+            
+            <SolidColorBrush x:Key="SuccessBrush" Color="#66BB6A"/>
+            <SolidColorBrush x:Key="WarningBrush" Color="#FFB74D"/>
+            <SolidColorBrush x:Key="DangerBrush" Color="#EF5350"/>
+            
+            <!-- 全局样式资源 -->
+            <CornerRadius x:Key="CardCornerRadius">24</CornerRadius>
+            <CornerRadius x:Key="LargeCardCornerRadius">32</CornerRadius>
+            
+            <!-- InsightBanner 主题 (青色渐变) -->
+            <!-- Light Mode -->
+            <LinearGradientBrush x:Key="InsightBannerBackgroundBrush" StartPoint="0,0" EndPoint="1,0">
+                <GradientStop Color="#E0F7FA" Offset="0"/> <!-- Cyan 50 -->
+                <GradientStop Color="#B2EBF2" Offset="1"/> <!-- Cyan 100 -->
+            </LinearGradientBrush>
+            <SolidColorBrush x:Key="InsightBannerBorderBrush" Color="#80DEEA"/> <!-- Cyan 200 -->
+            <SolidColorBrush x:Key="InsightBannerIconBackgroundBrush" Color="#FFFFFF"/>
+            <SolidColorBrush x:Key="InsightBannerIconForegroundBrush" Color="#00BCD4"/> <!-- Cyan 500 -->
+            <SolidColorBrush x:Key="InsightBannerTextBrush" Color="#006064"/> <!-- Cyan 900 -->
+            <SolidColorBrush x:Key="InsightBannerSubTextBrush" Color="#00838F"/> <!-- Cyan 800 -->
         </ResourceDictionary>
     </Application.Resources>
 </Application>

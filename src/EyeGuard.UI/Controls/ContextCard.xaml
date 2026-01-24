@@ -14,7 +14,7 @@
     <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             BorderThickness="1"
-            CornerRadius="16"
+            CornerRadius="{StaticResource CardCornerRadius}"
             Padding="20">
         <!-- 添加阴影 -->
         <Border.Shadow>
@@ -35,6 +35,29 @@
                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                        FontWeight="SemiBold"
                        CharacterSpacing="80"/>
+            
+            <!-- Limit 3.0: 微文案洞察区 - 放在顶部 -->
+            <Border Grid.Row="1"
+                    Background="{ThemeResource ControlAltFillColorTertiaryBrush}"
+                    CornerRadius="10"
+                    Padding="12,8"
+                    Margin="0,0,0,12"
+                    VerticalAlignment="Top">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <!-- Icon (Emoji) -->
+                    <TextBlock Text="{x:Bind InsightIcon, Mode=OneWay}"
+                               FontSize="16"
+                               VerticalAlignment="Center"/>
+                    
+                    <!-- 文案 -->
+                    <TextBlock Text="{x:Bind InsightText, Mode=OneWay}"
+                               FontSize="12"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               VerticalAlignment="Center"
+                               TextWrapping="Wrap"
+                               MaxLines="2"/>
+                </StackPanel>
+            </Border>
             
             <!-- Main Content - 放大图标和文字 -->
             <Grid Grid.Row="1" VerticalAlignment="Center">

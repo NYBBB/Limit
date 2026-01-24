@@ -60,7 +60,23 @@ public sealed partial class MainWindow : Window
         // 默认导航到仪表盘页面 (Limit 3.0)
         ContentFrame.Navigate(typeof(Views.DashboardPage3));
         
+        // Limit 3.0 Beta 2: 监听窗口显示/隐藏，优化后台性能
+        _appWindow.Changed += OnAppWindowChanged;
+        
         Debug.WriteLine("[MainWindow] Initialized with tray and toast services");
+    }
+    
+    /// <summary>
+    /// Beta 2: 监听窗口状态变化（最小化/恢复）
+    /// </summary>
+    private void OnAppWindowChanged(AppWindow sender, AppWindowChangedEventArgs args)
+    {
+        if (args.DidVisibilityChange)
+        {
+            var dashboardVM = DashboardViewModel3.Instance;
+            dashboardVM.OnWindowVisibilityChanged(sender.IsVisible);
+            Debug.WriteLine($"[MainWindow] Window visibility changed: {sender.IsVisible}");
+        }
     }
     
     /// <summary>

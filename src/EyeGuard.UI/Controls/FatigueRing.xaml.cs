@@ -221,6 +221,86 @@ public sealed partial class FatigueRing : UserControl
         get => (Brush)GetValue(OuterRingColorProperty);
         set => SetValue(OuterRingColorProperty, value);
     }
+    
+    // ===== Beta 2 UIUX P0.2: 状态标签属性 =====
+    
+    /// <summary>
+    /// 状态文本 (DEEP FLOW / STRAINED / NORMAL)
+    /// </summary>
+    public static readonly DependencyProperty StatusTextProperty =
+        DependencyProperty.Register(nameof(StatusText), typeof(string), typeof(FatigueRing),
+            new PropertyMetadata("NORMAL"));
+
+    public string StatusText
+    {
+        get => (string)GetValue(StatusTextProperty);
+        set => SetValue(StatusTextProperty, value);
+    }
+    
+    /// <summary>
+    /// 状态标签背景
+    /// </summary>
+    public static readonly DependencyProperty StatusBadgeBackgroundProperty =
+        DependencyProperty.Register(nameof(StatusBadgeBackground), typeof(Brush), typeof(FatigueRing),
+            new PropertyMetadata(new SolidColorBrush(Color.FromArgb(26, 19, 200, 236)))); // primary/10
+
+    public Brush StatusBadgeBackground
+    {
+        get => (Brush)GetValue(StatusBadgeBackgroundProperty);
+        set => SetValue(StatusBadgeBackgroundProperty, value);
+    }
+    
+    /// <summary>
+    /// 状态标签边框
+    /// </summary>
+    public static readonly DependencyProperty StatusBadgeBorderProperty =
+        DependencyProperty.Register(nameof(StatusBadgeBorder), typeof(Brush), typeof(FatigueRing),
+            new PropertyMetadata(new SolidColorBrush(Color.FromArgb(51, 19, 200, 236)))); // primary/20
+
+    public Brush StatusBadgeBorder
+    {
+        get => (Brush)GetValue(StatusBadgeBorderProperty);
+        set => SetValue(StatusBadgeBorderProperty, value);
+    }
+    
+    /// <summary>
+    /// 状态文本颜色
+    /// </summary>
+    public static readonly DependencyProperty StatusTextColorProperty =
+        DependencyProperty.Register(nameof(StatusTextColor), typeof(Brush), typeof(FatigueRing),
+            new PropertyMetadata(new SolidColorBrush(Color.FromArgb(255, 19, 200, 236)))); // primary
+
+    public Brush StatusTextColor
+    {
+        get => (Brush)GetValue(StatusTextColorProperty);
+        set => SetValue(StatusTextColorProperty, value);
+    }
+    
+    /// <summary>
+    /// 状态标签可见性
+    /// </summary>
+    public static readonly DependencyProperty StatusBadgeVisibilityProperty =
+        DependencyProperty.Register(nameof(StatusBadgeVisibility), typeof(Visibility), typeof(FatigueRing),
+            new PropertyMetadata(Visibility.Visible));
+
+    public Visibility StatusBadgeVisibility
+    {
+        get => (Visibility)GetValue(StatusBadgeVisibilityProperty);
+        set => SetValue(StatusBadgeVisibilityProperty, value);
+    }
+    
+    /// <summary>
+    /// 发光背景画刷
+    /// </summary>
+    public static readonly DependencyProperty RingGlowBrushProperty =
+        DependencyProperty.Register(nameof(RingGlowBrush), typeof(Brush), typeof(FatigueRing),
+            new PropertyMetadata(new SolidColorBrush(Color.FromArgb(255, 19, 200, 236)))); // primary
+
+    public Brush RingGlowBrush
+    {
+        get => (Brush)GetValue(RingGlowBrushProperty);
+        set => SetValue(RingGlowBrushProperty, value);
+    }
 
     // ===== 计算属性 =====
 
@@ -344,47 +424,88 @@ public sealed partial class FatigueRing : UserControl
     private void UpdateRingColor()
     {
         Color color;
-        if (Value < 40)
+        if (Value < 30)
         {
-            color = Color.FromArgb(255, 0, 178, 148); // Teal
+            color = Color.FromArgb(255, 19, 200, 236); // Cyan
+        }
+        else if (Value < 50)
+        {
+            color = Color.FromArgb(255, 79, 195, 247); // Light Blue
         }
         else if (Value < 70)
         {
-            color = Color.FromArgb(255, 255, 185, 0); // Amber
+            color = Color.FromArgb(255, 156, 39, 176); // Accent Purple
+        }
+        else if (Value < 85)
+        {
+            color = Color.FromArgb(255, 255, 183, 77); // Soft Amber
         }
         else
         {
-            color = Color.FromArgb(255, 232, 17, 35); // Red
+            color = Color.FromArgb(255, 239, 83, 80); // Soft Red
         }
         RingColor = new SolidColorBrush(color);
     }
 
     private void UpdateStatusAndSuggestion()
     {
+        // Beta 2 UIUX P0 (优化版): 柔和配色方案
         if (Value < 30)
         {
             StatusLabel = "精力充沛";
             Suggestion = "适合高强度工作";
+            StatusText = "DEEP FLOW";
+            // Cyan (#13c8ec)
+            StatusBadgeBackground = new SolidColorBrush(Color.FromArgb(26, 19, 200, 236)); 
+            StatusBadgeBorder = new SolidColorBrush(Color.FromArgb(51, 19, 200, 236));
+            StatusTextColor = new SolidColorBrush(Color.FromArgb(255, 19, 200, 236)); 
+            RingGlowBrush = new SolidColorBrush(Color.FromArgb(255, 19, 200, 236));
+            StatusBadgeVisibility = Visibility.Visible;
         }
         else if (Value < 50)
         {
             StatusLabel = "专注中";
             Suggestion = "保持当前节奏";
+            StatusText = "FOCUSED";
+            // Light Blue (#4FC3F7)
+            StatusBadgeBackground = new SolidColorBrush(Color.FromArgb(26, 79, 195, 247));
+            StatusBadgeBorder = new SolidColorBrush(Color.FromArgb(51, 79, 195, 247));
+            StatusTextColor = new SolidColorBrush(Color.FromArgb(255, 79, 195, 247));
+            RingGlowBrush = new SolidColorBrush(Color.FromArgb(255, 79, 195, 247));
+            StatusBadgeVisibility = Visibility.Visible;
         }
         else if (Value < 70)
         {
             StatusLabel = "略感疲惫";
             Suggestion = "建议处理轻量任务";
+            StatusText = "NORMAL";
+            // Accent Purple (#9C27B0) - 过渡色
+            StatusBadgeVisibility = Visibility.Collapsed; 
+            RingGlowBrush = new SolidColorBrush(Color.FromArgb(255, 156, 39, 176));
         }
         else if (Value < 85)
         {
             StatusLabel = "能量不足";
             Suggestion = "仅适合浏览邮件";
+            StatusText = "TIRED";
+            // Amber (#FFB74D)
+            StatusBadgeBackground = new SolidColorBrush(Color.FromArgb(26, 255, 183, 77));
+            StatusBadgeBorder = new SolidColorBrush(Color.FromArgb(51, 255, 183, 77));
+            StatusTextColor = new SolidColorBrush(Color.FromArgb(255, 255, 183, 77));
+            RingGlowBrush = new SolidColorBrush(Color.FromArgb(255, 255, 183, 77));
+            StatusBadgeVisibility = Visibility.Visible;
         }
         else
         {
             StatusLabel = "需要休息";
             Suggestion = "效率已大幅下降";
+            StatusText = "STRAINED";
+            // Soft Red (#EF5350)
+            StatusBadgeBackground = new SolidColorBrush(Color.FromArgb(26, 239, 83, 80));
+            StatusBadgeBorder = new SolidColorBrush(Color.FromArgb(51, 239, 83, 80));
+            StatusTextColor = new SolidColorBrush(Color.FromArgb(255, 239, 83, 80));
+            RingGlowBrush = new SolidColorBrush(Color.FromArgb(255, 239, 83, 80));
+            StatusBadgeVisibility = Visibility.Visible;
         }
     }
 }

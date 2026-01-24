@@ -27,17 +27,25 @@
             <ColumnDefinition Width="*" MinWidth="320"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>  <!-- Zone B 上方的 InsightBanner -->
+            <RowDefinition Height="*"/>     <!-- Zone A (左) + Zone B (右) -->
+            <RowDefinition Height="*"/>     <!-- Zone C (右下) -->
+            <RowDefinition Height="Auto"/>  <!-- Bottom Controls -->
         </Grid.RowDefinitions>
         
+        <!-- InsightBanner - 全宽显示 (Beta 2 UIUX P0) -->
+        <controls:InsightBanner Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="0"
+                                Margin="0,0,0,24"
+                                Icon="&#xE8C9;"
+                                Message="{x:Bind ViewModel.InsightText, Mode=OneWay}"
+                                SubText="基于您的使用模式和疲劳水平"/>
+        
         <!-- Zone A: The Core (精力反应堆) - 占据左边两行 -->
-        <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="2"
+        <Border Grid.Column="0" Grid.Row="1" Grid.RowSpan="2"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
-                CornerRadius="16"
+                CornerRadius="{StaticResource LargeCardCornerRadius}"
                 Margin="0,0,12,0"
                 Padding="24">
             <!-- 添加阴影效果 -->
@@ -131,8 +139,8 @@
             </Grid>
         </Border>
         
-        <!-- Zone B: Context Monitor (上下文感知) - 右上 -->
-        <controls:ContextCard Grid.Column="1" Grid.Row="0"
+        <!-- Zone B: Context Monitor (上下文感知) - 右中 -->
+        <controls:ContextCard Grid.Column="1" Grid.Row="1"
                               x:Name="ContextCardControl"
                               Margin="12,0,0,6"
                               AppName="{x:Bind ViewModel.CurrentAppName, Mode=OneWay}"
@@ -141,13 +149,15 @@
                               ClusterColor="{x:Bind ViewModel.CurrentClusterColor, Mode=OneWay}"
                               IsFocusing="{x:Bind ViewModel.IsFocusingMode, Mode=TwoWay}"
                               SessionTime="{x:Bind ViewModel.CurrentSessionTime, Mode=OneWay}"
+                              InsightIcon="{x:Bind ViewModel.InsightIcon, Mode=OneWay}"
+                              InsightText="{x:Bind ViewModel.InsightText, Mode=OneWay}"
                               RecentApp1Icon="{x:Bind ViewModel.RecentApp1Icon, Mode=OneWay}"
                               RecentApp2Icon="{x:Bind ViewModel.RecentApp2Icon, Mode=OneWay}"
                               RecentApp3Icon="{x:Bind ViewModel.RecentApp3Icon, Mode=OneWay}"
                               FocusingChanged="OnFocusingChanged"/>
         
         <!-- Zone C: Drainers (消耗排行) - 右下 -->
-        <controls:DrainersCard Grid.Column="1" Grid.Row="1"
+        <controls:DrainersCard Grid.Column="1" Grid.Row="2"
                                x:Name="DrainersCardControl"
                                Margin="12,6,0,0"
                                Drainers="{x:Bind ViewModel.TopDrainers, Mode=OneWay}"
@@ -155,7 +165,7 @@
                                FragmentTime="{x:Bind ViewModel.FragmentTimeText, Mode=OneWay}"/>
         
         <!-- Debug Panel (可折叠) - 底部横跨两列 -->
-        <Border Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="2"
+        <Border Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="3"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"

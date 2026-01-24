@@ -70,13 +70,15 @@ public class FatigueEngine
 
     /// <summary>
     /// 基础每分钟疲劳增加率。
+    /// Beta 2 (A1): 修正为 1.2，对应 90 分钟次昨夜节律周期
     /// </summary>
-    public double BaseFatigueIncreasePerMinute { get; set; } = 1.0;
+    public double BaseFatigueIncreasePerMinute { get; set; } = 1.2;
 
     /// <summary>
     /// 基础每分钟疲劳恢复率。
+    /// Beta 2 (A1): 匹配增长速度
     /// </summary>
-    public double BaseFatigueDecreasePerMinute { get; set; } = 2.0;
+    public double BaseFatigueDecreasePerMinute { get; set; } = 0.8;
     
     /// <summary>
     /// 调试用：直接设置疲劳值
@@ -104,7 +106,27 @@ public class FatigueEngine
         // Limit 3.0 公式: 基础速度 * (1 + 当前疲劳/100) * LoadWeight * (1 + SensitivityBias)
         double multiplier = 1.0 + FatigueValue / 100.0;
         double sensitivityMultiplier = 1.0 + SensitivityBias;
-        return (BaseFatigueIncreasePerMinute * multiplier * LoadWeight * sensitivityMultiplier) / 60.0;
+        
+        // Beta 2 (A4): 生物钟权重
+        double circadianMultiplier = GetCircadianMultiplier();
+        
+        return (BaseFatigueIncreasePerMinute * multiplier * LoadWeight * sensitivityMultiplier * circadianMultiplier) / 60.0;
+    }
+    
+    /// <summary>
+    /// Beta 2 (A4): 计算生物钟权重（昨夜节律）
+    /// </summary>
+    private double GetCircadianMultiplier()
+    {
+        int hour = DateTime.Now.Hour;
+        
+        return hour switch
+        {
+            >= 9 and <= 11 => 0.9,   // 黄金时间（上午）
+            >= 13 and <= 15 => 1.3,  // 午后低谷
+            >= 22 or <= 6 => 1.5,    // 深夜加班
+            _ => 1.0                  // 其他时段
+        };
     }
 
     /// <summary>

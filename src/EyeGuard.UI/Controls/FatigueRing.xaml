@@ -86,6 +86,13 @@
             
             <!-- ===== 内环 (疲劳值) ===== -->
             <Canvas Width="300" Height="300">
+                <!-- 发光效果背景 (Beta 2 UIUX P0.2) - 使用半透明圆圈模拟 -->
+                <Ellipse x:Name="GlowRing"
+                         Width="268" Height="268"
+                         Canvas.Left="16" Canvas.Top="16"
+                         Fill="{x:Bind RingGlowBrush, Mode=OneWay}"
+                         Opacity="0.08"/>
+                
                 <!-- 内环轨道 -->
                 <Ellipse x:Name="InnerTrackRing"
                          Width="260" Height="260"
@@ -140,6 +147,23 @@
                            HorizontalAlignment="Center"
                            TextAlignment="Center"
                            Opacity="0.8"/>
+                
+                <!-- 状态标签 (Beta 2 UIUX P0.2) -->
+                <Border x:Name="StatusBadge"
+                        Margin="0,12,0,0"
+                        Padding="16,6"
+                        CornerRadius="20"
+                        Background="{x:Bind StatusBadgeBackground, Mode=OneWay}"
+                        BorderBrush="{x:Bind StatusBadgeBorder, Mode=OneWay}"
+                        BorderThickness="1"
+                        HorizontalAlignment="Center"
+                        Visibility="{x:Bind StatusBadgeVisibility, Mode=OneWay}">
+                    <TextBlock Text="{x:Bind StatusText, Mode=OneWay}"
+                               FontSize="11"
+                               FontWeight="Bold"
+                               Foreground="{x:Bind StatusTextColor, Mode=OneWay}"
+                               CharacterSpacing="100"/>
+                </Border>
             </StackPanel>
             
             <!-- 双环模式：倒计时 + 任务名 -->

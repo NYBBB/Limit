@@ -32,6 +32,9 @@ public partial class DashboardViewModel3 : ObservableObject
     private readonly IWindowTracker _windowTracker;
     private readonly ClusterService _clusterService;
     private readonly ToastNotificationService _toastService;
+    
+    // Limit 3.0: Context Insight Service
+    private readonly ContextInsightService _insightService;
 
     // ===== Zone A: 精力反应堆属性 =====
 
@@ -99,6 +102,12 @@ public partial class DashboardViewModel3 : ObservableObject
     private int _currentAppSessionSeconds = 0;
     private string _lastAppName = "";
     
+    // Limit 3.0: 场景 A - 久坐检测
+    private const int DurationWarningMinutes = 45; // 45分钟提醒
+    private const int SnoozeDurationMinutes = 10; // 再冲10分钟
+    private bool _durationWarningShown = false; // 防止重复提醒
+    private int _nextWarningMinutes = DurationWarningMinutes; // 下次提醒时长
+    
     // 时间流：最近应用历史（用于显示切换路径）
     private readonly List<string> _recentApps = new();
     
@@ -110,6 +119,14 @@ public partial class DashboardViewModel3 : ObservableObject
     
     [ObservableProperty]
     private string _recentApp3Icon = "";
+    
+    // Limit 3.0: Context Monitor 微文案属性
+    
+    [ObservableProperty]
+    private string _insightIcon = "💻";
+    
+    [ObservableProperty]
+    private string _insightText = "正常工作中";
 
     // ===== Phase 9: Focus Commitment 专注承诺属性 =====
     
@@ -245,6 +262,10 @@ public partial class DashboardViewModel3 : ObservableObject
         _windowTracker = services.GetRequiredService<IWindowTracker>();
         _clusterService = services.GetRequiredService<ClusterService>();
         _toastService = services.GetRequiredService<ToastNotificationService>();
+        _insightService = services.GetRequiredService<ContextInsightService>();
+        
+        // Limit 3.0: 订阅通知按钮回调
+        _toastService.NotificationActionInvoked += OnNotificationAction;
         
         // Phase 7: 应用初始设置
         ApplySettings();
@@ -259,6 +280,36 @@ public partial class DashboardViewModel3 : ObservableObject
         
         // Phase 7: 加载初始数据
         _ = LoadInitialDataAsync();
+    }
+    
+    // ===== Limit 3.0 Beta 2: 窗口可见性管理（性能优化 B1）=====
+    
+    private bool _isWindowVisible = true;
+    
+    /// <summary>
+    /// Beta 2: 窗口可见性变更回调（最小化时冻结 UI 更新）
+    /// </summary>
+    public void OnWindowVisibilityChanged(bool isVisible)
+    {
+        if (_isWindowVisible == isVisible) return;
+        
+        _isWindowVisible = isVisible;
+        
+        if (!isVisible && IsMonitoring)
+        {
+            // 窗口最小化 - 冻结 UI 更新
+            _timer?.Stop();
+            Debug.WriteLine("[DashboardVM3] ⚡ Window hidden - UI timer paused (Beta 2 B1)");
+        }
+        else if (isVisible && IsMonitoring)
+        {
+            // 窗口恢复 - 立即拉取数据并恢复定时器
+            UpdateZoneA();
+            UpdateZoneB();
+            UpdateZoneC();
+            _timer?.Start();
+            Debug.WriteLine("[DashboardVM3] ⚡ Window visible - UI timer resumed");
+        }
     }
     
     // Phase 10: 处理 Eco 模式变化
@@ -472,6 +523,9 @@ public partial class DashboardViewModel3 : ObservableObject
                     _currentAppSessionSeconds++;
                 }
                 
+                // Limit 3.0: 场景 A - 久坐检测（使用当前应用时长）
+                CheckDurationWarning();
+                
                 // 更新显示
                 CurrentAppName = appDisplayName;
                 CurrentSessionTime = FormatSessionTime(_currentAppSessionSeconds);
@@ -499,6 +553,13 @@ public partial class DashboardViewModel3 : ObservableObject
                     _appUsageSeconds[appKey] = 0;
                 }
                 _appUsageSeconds[appKey]++;
+                
+                // ===== Limit 3.0: 更新 Context Insight 微文案 =====
+                var clusterId = cluster?.Id;
+                _insightService.UpdateContext(windowInfo.ProcessName, clusterId);
+                var insight = _insightService.GetCurrentInsight();
+                InsightIcon = insight.Icon;
+                InsightText = insight.GetText(); // 默认中文
             }
         }
         catch (Exception ex)
@@ -536,22 +597,42 @@ public partial class DashboardViewModel3 : ObservableObject
                 .Take(3)
                 .ToList();
 
+            // 计算总时间用于百分比
+            long totalSeconds = _appUsageSeconds.Values.Sum();
+            if (totalSeconds == 0) totalSeconds = 1;
+
             TopDrainers.Clear();
             int rank = 1;
-            int maxSeconds = topApps.FirstOrDefault().Value;
 
             foreach (var app in topApps)
             {
+                double percentage = (double)app.Value / totalSeconds * 100.0;
+                
+                // 颜色分级逻辑 (Beta 2 UIUX P1)
+                Color barColor;
+                if (percentage > 50)
+                    barColor = Color.FromArgb(255, 239, 83, 80); // Soft Red (#EF5350)
+                else if (percentage >= 20)
+                    barColor = Color.FromArgb(255, 255, 183, 77); // Soft Amber (#FFB74D)
+                else
+                    barColor = Color.FromArgb(255, 19, 200, 236); // Cyan (#13c8ec)
+
                 TopDrainers.Add(new DrainerItem
                 {
                     Rank = rank++,
                     Name = app.Key,
                     IconGlyph = Services.IconMapper.GetAppIcon(app.Key),
-                    Percentage = maxSeconds > 0 ? (app.Value * 100.0 / maxSeconds) : 0,
+                    Percentage = percentage,
                     Duration = FormatDuration(app.Value),
-                    BarColor = GetDrainerBarColor(rank - 1)
+                    BarColor = new SolidColorBrush(barColor)
                 });
             }
+            
+            // 更新碎片时间
+            long top3Seconds = topApps.Sum(x => x.Value);
+            long fragmentSeconds = totalSeconds - top3Seconds;
+            FragmentTimeText = FormatDuration((int)fragmentSeconds);
+            ShowFragmentWarning = fragmentSeconds > 1800 ? Visibility.Visible : Visibility.Collapsed; // >30min warn
         }
         catch (Exception ex)
         {
@@ -609,6 +690,11 @@ public partial class DashboardViewModel3 : ObservableObject
         _appUsageSeconds.Clear();
         TopDrainers.Clear();
         FatigueValue = 0;
+        
+        // Limit 3.0: 重置久坐提醒
+        _currentAppSessionSeconds = 0;
+        _durationWarningShown = false;
+        _nextWarningMinutes = DurationWarningMinutes;
     }
 
     // ===== 校准方法 (Limit 3.0) =====
@@ -639,6 +725,60 @@ public partial class DashboardViewModel3 : ObservableObject
         IsFocusingMode = isFocusing;
         // TODO: 将模式切换同步到疲劳引擎（影响负载权重）
         Debug.WriteLine($"[DashboardVM3] Focusing mode set to: {isFocusing}");
+    }
+    
+    // ===== Limit 3.0: 场景 A - 久坐检测与通知 =====
+    
+    /// <summary>
+    /// 检测当前应用是否连续使用过久
+    /// </summary>
+    private void CheckDurationWarning()
+    {
+        var currentMinutes = _currentAppSessionSeconds / 60;
+        
+        // 达到提醒阈值且尚未提醒
+        if (currentMinutes >= _nextWarningMinutes && !_durationWarningShown)
+        {
+            _toastService.ShowDurationWarningNotification(CurrentAppName, currentMinutes);
+            _durationWarningShown = true;
+            Debug.WriteLine($"[DashboardVM3] Duration warning sent: {CurrentAppName} - {currentMinutes}min");
+        }
+    }
+    
+    /// <summary>
+    /// 处理通知按钮回调
+    /// </summary>
+    private void OnNotificationAction(object? sender, string action)
+    {
+        Debug.WriteLine($"[DashboardVM3] Notification action: {action}");
+        
+        switch (action)
+        {
+            case "blinkBreak":
+                // 👀 微休息 - 启动 20 秒眨眼休息任务
+                _toastService.ShowBreakTaskNotification("眨眼运动", 20);
+                Debug.WriteLine("[DashboardVM3] Blink break started");
+                break;
+                
+            case "push10min":
+                // ⚡ 再冲 10 分钟 - 重置计时器，10分钟后更严重提醒
+                _durationWarningShown = false;
+                _nextWarningMinutes = (_currentAppSessionSeconds / 60) + SnoozeDurationMinutes;
+                Debug.WriteLine($"[DashboardVM3] Push 10 min: Next warning at {_nextWarningMinutes}min");
+                break;
+                
+            case "startBreak":
+                // 开始休息任务 - 现有逻辑（可能需要实现休息倒计时）
+                Debug.WriteLine("[DashboardVM3] Break task started");
+                break;
+                
+            case "rest":
+            case "snooze":
+            case "ignore":
+                // 现有按钮，保留
+                Debug.WriteLine($"[DashboardVM3] Existing action: {action}");
+                break;
+        }
     }
     
     // ===== Phase 9: Focus Commitment 专注承诺方法 =====

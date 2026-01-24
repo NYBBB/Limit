@@ -15,6 +15,9 @@ public class UsageCollectorService : IDisposable
     private WindowInfo? _currentWindow;
     private DateTime _lastTick;
     
+    // Limit 3.0 性能优化: 信号量控制并发写入，避免数据库锁定
+    private readonly System.Threading.SemaphoreSlim _dbSemaphore = new(1, 1);
+    
     // 空闲阈值（秒）- 超过此时间认为用户不在使用电脑
     private const int IdleThresholdSeconds = 60;
 
@@ -56,8 +59,8 @@ public class UsageCollectorService : IDisposable
 
     private void OnTick(object? state)
     {
-        // 检查空闲状态
-        _inputMonitor.CheckIdleState();
+        // ===== Limit 3.0 Beta 2: 移除重复调用（已在 UserActivityManager.Tick 中调用）=====
+        // _inputMonitor.CheckIdleState(); // ❌ 删除
         
         SaveCurrentUsage();
         _lastTick = DateTime.Now; // 重置最后时间
@@ -80,50 +83,65 @@ public class UsageCollectorService : IDisposable
         
         if (duration < 1) return; // 忽略太短的时间
 
-        try
+        // 捕获当前窗口信息（避免异步任务中访问可变状态）
+        var processName = _currentWindow.ProcessName;
+        var windowTitle = _currentWindow.WindowTitle;
+        
+        // 检测是否为浏览器
+        var isBrowser = WebsiteRecognizer.IsBrowserProcess(processName);
+        string? websiteName = null;
+        string? pageTitle = null;
+        
+        if (isBrowser)
         {
-            var processName = _currentWindow.ProcessName;
-            var windowTitle = _currentWindow.WindowTitle;
-            
-            // 检测是否为浏览器
-            var isBrowser = WebsiteRecognizer.IsBrowserProcess(processName);
-            string? websiteName = null;
-            string? pageTitle = null;
-            
-            if (isBrowser)
+            // 尝试识别网站
+            if (WebsiteRecognizer.TryRecognizeWebsite(windowTitle, out websiteName))
             {
-                // 尝试识别网站
-                if (WebsiteRecognizer.TryRecognizeWebsite(windowTitle, out websiteName))
-                {
-                    // 识别成功，websiteName 已设置
-                }
-                else
-                {
-                    // 未识别，保留原始标题（归类到"其他网站"）
-                    pageTitle = windowTitle;
-                }
+                // 识别成功，websiteName 已设置
             }
-            
-            // 保存到数据库（支持网站信息）
-            _databaseService.UpdateUsageWithWebsiteAsync(
-                processName, 
-                "", // AppPath 
-                websiteName,
-                pageTitle,
-                (int)duration
-            ).Wait();
-            
-            // 同时更新每小时使用记录（用于分析页面柱状图）
-            _databaseService.UpdateHourlyUsageAsync(processName, (int)duration).Wait();
+            else
+            {
+                // 未识别，保留原始标题（归类到"其他网站"）
+                pageTitle = windowTitle;
+            }
         }
-        catch (Exception ex)
+        
+        // ===== Limit 3.0 性能优化: Fire-and-forget 异步写入，不阻塞主线程 =====
+        _ = Task.Run(async () =>
         {
-            Debug.WriteLine($"Error saving usage: {ex.Message}");
-        }
+            // 使用信号量确保写入顺序，避免数据库并发冲突
+            await _dbSemaphore.WaitAsync();
+            try
+            {
+                // 保存到数据库（支持网站信息）
+                await _databaseService.UpdateUsageWithWebsiteAsync(
+                    processName,
+                    "", // AppPath
+                    websiteName,
+                    pageTitle,
+                    (int)duration
+                );
+
+                // 同时更新每小时使用记录（用于分析页面柱状图）
+                await _databaseService.UpdateHourlyUsageAsync(processName, (int)duration);
+                
+                Debug.WriteLine($"[UsageCollector] Saved usage: {processName} ({duration:F1}s)");
+            }
+            catch (Exception ex)
+            {
+                // 记录异常但不中断流程
+                Debug.WriteLine($"[UsageCollector] Error saving usage: {ex.Message}");
+            }
+            finally
+            {
+                _dbSemaphore.Release();
+            }
+        });
     }
 
     public void Dispose()
     {
         Stop();
+        _dbSemaphore?.Dispose();
     }
 }
