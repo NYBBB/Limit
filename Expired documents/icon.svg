@@ -1,0 +1,29 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="lightBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f3e7ff;stop-opacity:1" /> <stop offset="100%" style="stop-color:#e0f2fe;stop-opacity:1" /> </linearGradient>
+
+    <linearGradient id="progressGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00d2ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#924eff;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect x="12" y="12" width="232" height="232" rx="50" fill="url(#lightBgGrad)" />
+
+  <circle cx="128" cy="128" r="80" fill="none" stroke="#ffffff" stroke-opacity="0.7" stroke-width="16" />
+  
+  <path d="M 128 48 A 80 80 0 1 1 68.5 183" 
+        fill="none" stroke="url(#progressGrad)" stroke-width="16" stroke-linecap="round" filter="url(#glow)" />
+  
+  <circle cx="128" cy="48" r="6" fill="#ff3333" filter="url(#glow)">
+     <animate attributeName="opacity" values="1;0.6;1" dur="3s" repeatCount="indefinite" />
+  </circle>
+</svg>

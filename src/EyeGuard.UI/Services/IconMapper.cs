@@ -55,7 +55,7 @@ public static class IconMapper
         
         // --- 创意与设计 (Adobe等) ---
         { "photoshop", "\uE790" },   // Color (Brush)
-        { "illustrator", "\uE790" }, 
+        { "illustrator", "\uE790" },
         { "premiere", "\uE714" },    // Video (Play)
         { "afterfx", "\uE714" },
         { "blender", "\uE9ca" },     // 3D Print / Box
@@ -94,7 +94,7 @@ public static class IconMapper
         { "league of legends", "\uE7FC" },
         { "valorant", "\uE7FC" },
     };
-    
+
     // 网站图标映射
     private static readonly Dictionary<string, string> WebsiteIcons = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -168,7 +168,7 @@ public static class IconMapper
 
         
     };
-    
+
     /// <summary>
     /// 获取应用图标（Segoe MDL2 Glyph）
     /// </summary>
@@ -187,10 +187,10 @@ public static class IconMapper
         if (lowerName.Contains("player")) return "\uE714";
         if (lowerName.Contains("music")) return "\uE8D6";
         if (lowerName.Contains("game")) return "\uE7FC";
-        
+
         return "\uE8FC"; // 默认：App通用图标
     }
-    
+
     /// <summary>
     /// 获取网站图标（Segoe MDL2 Glyph）
     /// </summary>
@@ -198,7 +198,7 @@ public static class IconMapper
     {
         return WebsiteIcons.TryGetValue(websiteName, out var icon) ? icon : "\uE774"; // 默认：网页图标
     }
-    
+
     /// <summary>
     /// 是否为浏览器应用
     /// </summary>
@@ -206,10 +206,10 @@ public static class IconMapper
     {
         // 扩展的浏览器判断列表
         var name = appName.ToLowerInvariant();
-        return name.Contains("edge") || 
-               name.Contains("chrome") || 
-               name.Contains("firefox") || 
-               name.Contains("browser") || 
+        return name.Contains("edge") ||
+               name.Contains("chrome") ||
+               name.Contains("firefox") ||
+               name.Contains("browser") ||
                name.Contains("explorer") && !name.Equals("explorer") || // 排除资源管理器
                name.Contains("safari") ||
                name.Contains("opera") ||
@@ -217,7 +217,7 @@ public static class IconMapper
                name.Contains("arc") ||
                name.Contains("vivaldi");
     }
-    
+
     /// <summary>
     /// 获取友好的应用名称（用于显示）
     /// </summary>
@@ -283,14 +283,98 @@ public static class IconMapper
             { "steam", "Steam" },
             { "unity editor", "Unity" },
         };
-        
+
         // 先尝试完全匹配
         if (friendlyNames.TryGetValue(appName, out var friendlyName))
             return friendlyName;
-        
+
         // 如果没有映射，返回首字母大写的原名
-        return appName.Length > 0 
-            ? char.ToUpper(appName[0]) + appName.Substring(1) 
+        return appName.Length > 0
+            ? char.ToUpper(appName[0]) + appName.Substring(1)
             : appName;
+    }
+
+    /// <summary>
+    /// 获取应用对应的 Material Symbol 图标名（用于前端 Vue 组件）
+    /// </summary>
+    public static string GetMaterialSymbol(string appName)
+    {
+        var name = appName.ToLowerInvariant();
+
+        // 浏览器
+        if (name.Contains("edge") || name.Contains("chrome") || name.Contains("firefox") ||
+            name.Contains("browser") || name.Contains("brave") || name.Contains("arc") ||
+            name.Contains("360se") || name.Contains("qqbrowser"))
+            return "language";
+
+        // IDE/代码编辑器
+        if (name.Contains("code") || name.Contains("devenv") || name.Contains("rider") ||
+            name.Contains("idea") || name.Contains("pycharm") || name.Contains("webstorm") ||
+            name.Contains("goland") || name.Contains("sublime") || name.Contains("atom") ||
+            name.Contains("notepad++"))
+            return "code";
+
+        // 终端
+        if (name.Contains("terminal") || name.Contains("cmd") || name.Contains("powershell") ||
+            name.Contains("wt") || name.Contains("ubuntu") || name.Contains("putty") ||
+            name.Contains("xshell") || name.Contains("mobaxterm"))
+            return "terminal";
+
+        // 办公软件
+        if (name.Contains("word") || name.Contains("winword"))
+            return "description";
+        if (name.Contains("excel"))
+            return "table_chart";
+        if (name.Contains("powerpnt") || name.Contains("powerpoint"))
+            return "slideshow";
+        if (name.Contains("outlook"))
+            return "mail";
+        if (name.Contains("onenote"))
+            return "note";
+        if (name.Contains("acrobat") || name.Contains("pdf"))
+            return "picture_as_pdf";
+
+        // 通讯社交
+        if (name.Contains("wechat") || name.Contains("qq") || name.Contains("tim") ||
+            name.Contains("discord") || name.Contains("telegram") || name.Contains("slack"))
+            return "chat";
+        if (name.Contains("teams") || name.Contains("dingtalk") || name.Contains("lark") ||
+            name.Contains("feishu") || name.Contains("skype"))
+            return "groups";
+
+        // 媒体播放
+        if (name.Contains("spotify") || name.Contains("music") || name.Contains("cloudmusic") ||
+            name.Contains("qqmusic"))
+            return "headphones";
+        if (name.Contains("player") || name.Contains("vlc") || name.Contains("mpv") ||
+            name.Contains("potplayer"))
+            return "play_circle";
+
+        // 创意设计
+        if (name.Contains("photoshop") || name.Contains("illustrator") || name.Contains("figma"))
+            return "palette";
+        if (name.Contains("premiere") || name.Contains("afterfx"))
+            return "video_camera_back";
+        if (name.Contains("blender") || name.Contains("unity"))
+            return "view_in_ar";
+
+        // 游戏
+        if (name.Contains("steam") || name.Contains("game") || name.Contains("epicgames") ||
+            name.Contains("battlenet") || name.Contains("origin") || name.Contains("wegame") ||
+            name.Contains("minecraft") || name.Contains("roblox") || name.Contains("league") ||
+            name.Contains("valorant"))
+            return "sports_esports";
+
+        // 系统工具
+        if (name.Contains("explorer"))
+            return "folder_open";
+        if (name.Contains("taskmgr"))
+            return "monitor_heart";
+        if (name.Contains("regedit"))
+            return "settings";
+        if (name.Contains("vmware") || name.Contains("virtualbox"))
+            return "dns";
+
+        return "apps"; // 默认图标
     }
 }

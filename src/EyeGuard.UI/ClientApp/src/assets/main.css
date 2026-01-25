@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color: #334155;
+    background-color: #f8fafc;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* 滚动条美化 (Light Mode) */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 9999px;
+    transition: background-color 0.2s;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+  }
+}
+
+@layer components {
+
+  /* 基础白底卡片 */
+  .card-base {
+    @apply bg-surface border border-border-default rounded-card shadow-clean transition-all duration-200;
+  }
+
+  .card-hover {
+    @apply hover:shadow-clean-lg hover:border-primary/30;
+  }
+
+  /* 按钮组件 */
+  .btn-primary {
+    @apply bg-primary text-white font-semibold px-4 py-2.5 rounded-button shadow-lg shadow-primary/20 hover:bg-primary-hover active:scale-95 transition-all duration-200 flex items-center justify-center gap-2;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-text-tertiary border border-border-default font-medium px-4 py-2.5 rounded-button shadow-sm hover:bg-slate-50 hover:text-text-primary hover:border-slate-300 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2;
+  }
+
+  .btn-ghost {
+    @apply text-text-tertiary hover:bg-slate-100 hover:text-text-primary rounded-button px-3 py-2 transition-colors;
+  }
+
+  /* 侧边栏导航项 */
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-button text-text-tertiary font-medium transition-all duration-200 hover:bg-slate-50 hover:text-text-primary;
+  }
+
+  .nav-item.active {
+    @apply bg-primary text-white shadow-md shadow-primary/30 font-semibold;
+  }
+
+  /* 输入框 */
+  .input-base {
+    @apply bg-white border border-border-default rounded-button px-4 py-2 text-sm text-text-primary placeholder-text-tertiary outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all;
+  }
+}

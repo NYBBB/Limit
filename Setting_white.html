@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EyeGuard - Settings</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Noto+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4f46e5","primary-hover": "#4338ca",
+                        "secondary": "#64748b",
+                        "bg-base": "#f8fafc","bg-surface": "#ffffff",
+                        "border-light": "#e2e8f0","border-hover": "#cbd5e1",
+                        "text-main": "#0f172a","text-muted": "#64748b",},
+                    fontFamily: {
+                        "display": ["Manrope", "Noto Sans", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.75rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "2xl": "2rem"
+                    },
+                    boxShadow: {
+                        "clean": "0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)",
+                        "clean-lg": "0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.025)",
+                        "float": "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01)"
+                    }
+                },
+            },
+        }
+    </script>
+<style>::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #4f46e5;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #4f46e5;
+        }
+        .cluster-pattern {
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
+</head>
+<body class="bg-bg-base text-text-main font-body antialiased overflow-hidden selection:bg-primary/20 selection:text-primary">
+<div class="relative flex h-screen w-full overflow-hidden">
+<aside class="w-72 hidden lg:flex flex-col h-full bg-bg-surface border-r border-border-light z-20 shadow-clean">
+<div class="p-6 flex flex-col h-full justify-between">
+<div class="flex flex-col gap-8">
+<div class="flex items-center gap-3 px-2">
+<div class="size-10 text-primary flex items-center justify-center bg-primary/10 rounded-xl">
+<span class="material-symbols-outlined text-2xl">visibility</span>
+</div>
+<h2 class="text-text-main text-xl font-extrabold tracking-tight font-display">EyeGuard</h2>
+</div>
+<div class="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-border-light">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 ring-2 ring-white shadow-sm" data-alt="Portrait of Dr. Smith smiling" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBPWZE8aXnXuNp1l-Q2Rig9ZsQeNSyqoTNsDxx21ablPVlnAEvV6R5DxuQcHeayN7ecuTx0wILE0hGj3cHfkkQfOEEa6X1M93zwNUpcX52kOFRk8GpZoxl7sBzSuQiloTvup5fK5BGKi3vkRusLBoA8bR78zqqtYzNxxzwdDguIpa0QOX0irDe_ThHDRIeFRKwP5_nY0VOBrJDQqQOs66A7bF3B-At800rg9HxNKBBWp6sI1UzTwA7vnXaSeCOy2CxzdQqnM9eIcwQ");'></div>
+<div class="flex flex-col">
+<h1 class="text-text-main text-sm font-bold leading-tight">Dr. Smith</h1>
+<p class="text-text-muted text-xs font-medium">Pro Plan</p>
+</div>
+</div>
+<nav class="flex flex-col gap-1.5 mt-2">
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-text-muted hover:bg-slate-50 hover:text-text-main transition-colors group" href="#">
+<span class="material-symbols-outlined text-[22px] group-hover:scale-105 transition-transform">dashboard</span>
+<p class="text-sm font-semibold">Dashboard</p>
+</a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-text-muted hover:bg-slate-50 hover:text-text-main transition-colors group" href="#">
+<span class="material-symbols-outlined text-[22px] group-hover:scale-105 transition-transform">bar_chart</span>
+<p class="text-sm font-semibold">Analysis</p>
+</a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-primary text-white shadow-lg shadow-primary/30 group transition-all" href="#">
+<span class="material-symbols-outlined text-[22px]">settings</span>
+<p class="text-sm font-semibold">Settings</p>
+</a>
+</nav>
+</div>
+<div class="mt-auto pt-6 border-t border-border-light">
+<button class="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-text-muted hover:bg-slate-50 hover:text-red-500 transition-colors group">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+<span class="text-sm font-semibold">Sign Out</span>
+</button>
+</div>
+</div>
+</aside>
+<div class="flex-1 flex flex-col h-full relative z-10 overflow-hidden bg-bg-base">
+<header class="flex items-center justify-between bg-bg-surface/80 backdrop-blur-md px-8 py-5 border-b border-border-light z-20 sticky top-0">
+<div class="flex flex-col">
+<h1 class="text-2xl font-bold text-text-main font-display">Settings</h1>
+<p class="text-text-muted text-sm">Manage your workspace and preferences</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex items-center bg-white rounded-xl px-4 h-10 w-64 border border-border-light focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10 transition-all shadow-sm">
+<span class="material-symbols-outlined text-text-muted text-[20px]">search</span>
+<input class="bg-transparent border-none text-text-main placeholder-text-muted text-sm w-full focus:ring-0" placeholder="Find setting..." type="text"/>
+</div>
+<button class="relative size-10 flex items-center justify-center rounded-xl bg-white border border-border-light text-text-muted hover:text-primary hover:border-primary/30 shadow-sm transition-all">
+<span class="material-symbols-outlined text-[22px]">notifications</span>
+<span class="absolute top-2.5 right-3 size-1.5 bg-red-500 rounded-full"></span>
+</button>
+<button class="lg:hidden size-10 flex items-center justify-center rounded-xl bg-white border border-border-light text-text-main shadow-sm">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto p-6 md:p-8 lg:px-10 lg:py-8 scroll-smooth">
+<div class="max-w-6xl mx-auto flex flex-col gap-8">
+<section class="flex flex-col gap-4">
+<div class="flex items-end justify-between">
+<div>
+<h3 class="text-lg font-bold text-text-main font-display">Cluster Editor</h3>
+<p class="text-text-muted text-sm mt-1">Organize applications into productivity zones for better fatigue tracking.</p>
+</div>
+<button class="text-primary text-sm font-semibold hover:bg-primary/5 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-lg">add</span>
+                                New Cluster
+                            </button>
+</div>
+<div class="bg-slate-100/50 border border-border-light rounded-2xl p-6 lg:p-8 cluster-pattern relative min-h-[320px]">
+<div class="bg-white rounded-xl border border-border-light shadow-clean-lg p-5 mb-6 w-full max-w-2xl relative group hover:border-primary/30 transition-colors">
+<div class="flex items-center justify-between mb-4 pb-3 border-b border-border-light/50">
+<div class="flex items-center gap-3">
+<div class="size-3 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
+<span class="font-bold text-text-main">High Focus</span>
+<span class="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-medium border border-emerald-100">Productivity</span>
+</div>
+<span class="material-symbols-outlined text-text-muted/50 cursor-grab hover:text-text-main">drag_indicator</span>
+</div>
+<div class="flex flex-wrap gap-3">
+<div class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-border-light rounded-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-move">
+<div class="bg-center bg-no-repeat bg-contain size-4 opacity-80" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAbfbMqkKpVR_wcmaqqzYjapCheFqRRiuTdLiZh9VDcC0YYlozh1yxG6dbpk0OzkIjYudiDs4-ZsOXxsQ6zp6iHf83-XYQqUtMpdDNi82BhhITvaeEaqs7VWJ2-3cRy7bGdzkhwW-YS0SAwR5UIIrZxQiOU9-dHc4Mu7BoQFtmtsckHwGVibS2tzMLczGtfFD4JJTOfHv6wJuErdo6yN_OhkZD5tedFH_ufW5HPsNOlWZx2yTAFwNmtvkIY1_gjRVhBoRvoMIGcJtY");'></div>
+<span class="text-sm font-medium text-slate-700">Chrome</span>
+<button class="ml-1 text-slate-400 hover:text-red-500 rounded-full"><span class="material-symbols-outlined text-sm">close</span></button>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-border-light rounded-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-move">
+<span class="size-4 rounded bg-indigo-500 flex items-center justify-center text-[8px] text-white font-bold">F</span>
+<span class="text-sm font-medium text-slate-700">Figma</span>
+<button class="ml-1 text-slate-400 hover:text-red-500 rounded-full"><span class="material-symbols-outlined text-sm">close</span></button>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-border-light rounded-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-move">
+<span class="size-4 rounded bg-blue-600 flex items-center justify-center text-[8px] text-white font-bold">V</span>
+<span class="text-sm font-medium text-slate-700">VS Code</span>
+<button class="ml-1 text-slate-400 hover:text-red-500 rounded-full"><span class="material-symbols-outlined text-sm">close</span></button>
+</div>
+<button class="flex items-center justify-center size-8 rounded-lg border border-dashed border-slate-300 text-slate-400 hover:border-primary hover:text-primary hover:bg-white transition-all">
+<span class="material-symbols-outlined text-lg">add</span>
+</button>
+</div>
+</div>
+<div class="bg-white rounded-xl border border-border-light shadow-clean-lg p-5 w-full max-w-2xl relative group hover:border-primary/30 transition-colors ml-12">
+<div class="flex items-center justify-between mb-4 pb-3 border-b border-border-light/50">
+<div class="flex items-center gap-3">
+<div class="size-3 rounded-full bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.4)]"></div>
+<span class="font-bold text-text-main">Communication</span>
+<span class="text-xs bg-orange-50 text-orange-700 px-2 py-0.5 rounded-full font-medium border border-orange-100">Interruptive</span>
+</div>
+<span class="material-symbols-outlined text-text-muted/50 cursor-grab hover:text-text-main">drag_indicator</span>
+</div>
+<div class="flex flex-wrap gap-3">
+<div class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-border-light rounded-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-move">
+<span class="size-4 rounded bg-[#4A154B] flex items-center justify-center text-[8px] text-white font-bold">S</span>
+<span class="text-sm font-medium text-slate-700">Slack</span>
+<button class="ml-1 text-slate-400 hover:text-red-500 rounded-full"><span class="material-symbols-outlined text-sm">close</span></button>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-border-light rounded-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-move">
+<span class="size-4 rounded bg-blue-500 flex items-center justify-center text-[8px] text-white font-bold">Z</span>
+<span class="text-sm font-medium text-slate-700">Zoom</span>
+<button class="ml-1 text-slate-400 hover:text-red-500 rounded-full"><span class="material-symbols-outlined text-sm">close</span></button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<hr class="border-border-light"/>
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<div class="bg-white rounded-2xl border border-border-light p-6 shadow-clean">
+<h3 class="text-lg font-bold text-text-main mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">tune</span>
+                                General Preferences
+                            </h3>
+<div class="flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-text-main">Fatigue Notifications</span>
+<span class="text-xs text-text-muted">Get alerted when fatigue exceeds 70%</span>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-2 border-slate-300 appearance-none cursor-pointer transition-all duration-300 shadow-sm" id="toggle1" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-200 cursor-pointer transition-colors duration-300" for="toggle1"></label>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-text-main">Launch on Startup</span>
+<span class="text-xs text-text-muted">Open EyeGuard when computer starts</span>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-2 border-slate-300 appearance-none cursor-pointer transition-all duration-300 shadow-sm" id="toggle2" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-200 cursor-pointer transition-colors duration-300" for="toggle2"></label>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between">
+<span class="text-sm font-semibold text-text-main">Focus Session Duration</span>
+<span class="text-sm font-bold text-primary">45 min</span>
+</div>
+<input class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary" max="90" min="15" type="range" value="45"/>
+<div class="flex justify-between text-xs text-text-muted px-1">
+<span>15m</span>
+<span>90m</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-white rounded-2xl border border-border-light p-6 shadow-clean">
+<h3 class="text-lg font-bold text-text-main mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">security</span>
+                                Privacy &amp; Interface
+                            </h3>
+<div class="flex flex-col gap-5">
+<div>
+<span class="text-sm font-semibold text-text-main mb-3 block">Interface Theme</span>
+<div class="grid grid-cols-3 gap-3">
+<button class="flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-primary bg-primary/5 cursor-default">
+<div class="w-full h-8 bg-white border border-slate-200 rounded shadow-sm"></div>
+<span class="text-xs font-bold text-primary">Light</span>
+</button>
+<button class="flex flex-col items-center gap-2 p-3 rounded-xl border border-border-light hover:border-primary/50 hover:bg-slate-50 transition-all">
+<div class="w-full h-8 bg-slate-800 rounded shadow-sm"></div>
+<span class="text-xs font-medium text-text-muted">Dark</span>
+</button>
+<button class="flex flex-col items-center gap-2 p-3 rounded-xl border border-border-light hover:border-primary/50 hover:bg-slate-50 transition-all">
+<div class="w-full h-8 bg-gradient-to-br from-white to-slate-800 rounded shadow-sm"></div>
+<span class="text-xs font-medium text-text-muted">Auto</span>
+</button>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-border-light">
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-text-main">Data Collection</span>
+<span class="text-xs text-text-muted">Share anonymous usage data</span>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-2 border-slate-300 appearance-none cursor-pointer transition-all duration-300 shadow-sm" id="toggle3" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-200 cursor-pointer transition-colors duration-300" for="toggle3"></label>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+</body></html>

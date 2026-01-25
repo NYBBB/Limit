@@ -10,7 +10,7 @@ trigger: always_on
 
 你不需要主动去运行dotnet build，dotnet publish，或者dotnet run，这些命令。因为你运行后看不到报错，我会自己去运行。
 
-我们需要至少同时维护两个文件，一个是Task.md，一个是implementation Plan.md，分别记录任务和实现计划。如果有测试需求，那么需要维护一个test plan.md
+我们需要至少同时维护两个文件，一个是Task.md，一个是implementation Plan.md，分别记录任务和实现计划。如果有测试需求，那么需要维护一个test plan.md，所有文档都需要使用中文写。
 
 所有图表显示必须适配中文，务必不能让中文渲染出现框框的情况。
 

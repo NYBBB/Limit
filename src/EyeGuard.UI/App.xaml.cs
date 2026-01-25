@@ -114,12 +114,16 @@ public partial class App : Application
         
         // ===== Limit 3.0: Context Monitor =====
         services.AddSingleton<ContextInsightService>();
+        services.AddSingleton<IconExtractorService>(); // Phase 4: 本地图标获取
         
         // ===== Phase 6: 数据聚合 =====
         services.AddSingleton<DataAggregationService>();
         
         // ===== UI 服务 =====
         services.AddSingleton<EyeGuard.UI.Services.ToastNotificationService>();
+        
+        // ===== Limit 3.0 混合架构: WebView2 Bridge =====
+        services.AddSingleton<EyeGuard.UI.Bridge.BridgeService>();
         
         // ===== 视图模型 =====
         services.AddTransient(sp => DashboardViewModel.Instance);

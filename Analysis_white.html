@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EyeGuard - Analysis</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3b82f6",     // Professional Blue
+                        "primary-dark": "#2563eb",
+                        "primary-light": "#eff6ff",
+                        "secondary": "#64748b",   // Slate Gray
+                        "background": "#f1f5f9",  // Slate 100
+                        "surface": "#ffffff",
+                        "success": "#10b981",
+                        "warning": "#f59e0b",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"],
+                        "body": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.75rem", "lg": "1rem", "xl": "1.5rem", "2xl": "2rem"},
+                    boxShadow: {
+                        "soft": "0 4px 20px -5px rgba(0, 0, 0, 0.05)",
+                        "card": "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+                    }
+                },
+            },
+        }
+    </script>
+<style>::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        .chart-bar {
+            transition: height 1s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-background text-slate-800 font-body overflow-hidden">
+<div class="relative flex h-screen w-full overflow-hidden">
+<aside class="w-64 hidden lg:flex flex-col h-full bg-surface border-r border-slate-200 z-20 shadow-sm">
+<div class="p-6 flex flex-col h-full">
+<div class="flex items-center gap-3 mb-10 text-slate-900">
+<div class="size-9 bg-primary text-white flex items-center justify-center rounded-xl shadow-md shadow-primary/20">
+<span class="material-symbols-outlined">visibility</span>
+</div>
+<h2 class="text-xl font-extrabold tracking-tight font-display">EyeGuard</h2>
+</div>
+<nav class="flex flex-col gap-2 flex-1">
+<p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Menu</p>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">dashboard</span>
+<span class="font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary-light text-primary font-bold shadow-sm transition-all relative overflow-hidden" href="#">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>
+<span class="material-symbols-outlined">bar_chart</span>
+<span>Analysis</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">favorite</span>
+<span class="font-medium">Health</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">settings</span>
+<span class="font-medium">Settings</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-slate-100">
+<div class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 ring-2 ring-slate-100" data-alt="Portrait of Dr. Smith smiling" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBPWZE8aXnXuNp1l-Q2Rig9ZsQeNSyqoTNsDxx21ablPVlnAEvV6R5DxuQcHeayN7ecuTx0wILE0hGj3cHfkkQfOEEa6X1M93zwNUpcX52kOFRk8GpZoxl7sBzSuQiloTvup5fK5BGKi3vkRusLBoA8bR78zqqtYzNxxzwdDguIpa0QOX0irDe_ThHDRIeFRKwP5_nY0VOBrJDQqQOs66A7bF3B-At800rg9HxNKBBWp6sI1UzTwA7vnXaSeCOy2CxzdQqnM9eIcwQ");'></div>
+<div class="flex flex-col overflow-hidden">
+<h1 class="text-slate-900 text-sm font-bold truncate">Dr. Smith</h1>
+<p class="text-slate-500 text-xs truncate">Pro Plan</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-slate-400 text-sm">expand_more</span>
+</div>
+</div>
+</div>
+</aside>
+<div class="flex-1 flex flex-col h-full relative overflow-hidden bg-background">
+<header class="flex items-center justify-between bg-surface/80 backdrop-blur-md px-8 py-5 border-b border-slate-200 z-10 sticky top-0">
+<div class="flex flex-col">
+<h1 class="text-2xl font-bold font-display text-slate-900">Analysis</h1>
+<p class="text-slate-500 text-sm">Weekly fatigue and productivity breakdown</p>
+</div>
+<div class="flex items-center gap-4">
+<button class="hidden md:flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+                    Oct 24 - Oct 30
+                    <span class="material-symbols-outlined text-[18px]">arrow_drop_down</span>
+</button>
+<button class="relative size-10 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-500 hover:text-primary transition-colors shadow-sm">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-primary rounded-full ring-2 ring-white"></span>
+</button>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto p-6 md:p-8 scroll-smooth">
+<div class="max-w-7xl mx-auto flex flex-col gap-6">
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-surface rounded-2xl p-6 shadow-soft border border-slate-100 flex flex-col justify-between h-40">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-2 text-slate-500 text-sm font-medium">
+<span class="material-symbols-outlined text-primary">cardiology</span>
+                            Avg. Fatigue
+                        </div>
+<span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">trending_down</span>
+                            -12%
+                        </span>
+</div>
+<div class="mt-4">
+<h3 class="text-4xl font-extrabold text-slate-900">32<span class="text-lg text-slate-400 font-medium ml-1">%</span></h3>
+<p class="text-slate-400 text-xs mt-1">Daily Average • Optimal Range</p>
+</div>
+</div>
+<div class="bg-surface rounded-2xl p-6 shadow-soft border border-slate-100 flex flex-col justify-between h-40">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-2 text-slate-500 text-sm font-medium">
+<span class="material-symbols-outlined text-blue-500">schedule</span>
+                            Total Focus Time
+                        </div>
+<span class="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">trending_up</span>
+                            +45m
+                        </span>
+</div>
+<div class="mt-4">
+<h3 class="text-4xl font-extrabold text-slate-900">6<span class="text-2xl text-slate-400 ml-1">h</span> 12<span class="text-2xl text-slate-400 ml-1">m</span></h3>
+<p class="text-slate-400 text-xs mt-1">vs. 5h 27m last week</p>
+</div>
+</div>
+<div class="bg-surface rounded-2xl p-6 shadow-soft border border-slate-100 flex flex-col justify-between h-40">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-2 text-slate-500 text-sm font-medium">
+<span class="material-symbols-outlined text-purple-500">psychology</span>
+                            Productivity
+                        </div>
+<span class="bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded-full font-bold">
+                            Stable
+                        </span>
+</div>
+<div class="mt-4">
+<h3 class="text-4xl font-extrabold text-slate-900">94<span class="text-lg text-slate-400 font-medium ml-1">/100</span></h3>
+<div class="w-full bg-slate-100 rounded-full h-1.5 mt-3">
+<div class="bg-gradient-to-r from-blue-500 to-purple-500 h-1.5 rounded-full w-[94%]"></div>
+</div>
+</div>
+</div>
+</section>
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-2 bg-surface rounded-2xl p-6 md:p-8 shadow-soft border border-slate-100">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h3 class="text-lg font-bold text-slate-900">Fatigue Trends</h3>
+<p class="text-sm text-slate-500">Peak fatigue levels throughout the week</p>
+</div>
+<div class="flex gap-2">
+<span class="flex items-center gap-1 text-xs text-slate-500"><span class="size-2 rounded-full bg-primary"></span> Work</span>
+<span class="flex items-center gap-1 text-xs text-slate-500"><span class="size-2 rounded-full bg-slate-200"></span> Break</span>
+</div>
+</div>
+<div class="h-64 w-full flex items-end justify-between gap-2 md:gap-4 px-2">
+<div class="flex flex-col items-center gap-2 w-full group">
+<div class="relative w-full md:w-12 bg-slate-50 rounded-t-lg h-full flex items-end overflow-hidden group-hover:bg-slate-100 transition-colors">
+<div class="w-full bg-primary/80 h-[45%] rounded-t-lg relative group-hover:bg-primary transition-colors">
+<div class="opacity-0 group-hover:opacity-100 absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded pointer-events-none transition-opacity">45%</div>
+</div>
+</div>
+<span class="text-xs font-medium text-slate-400">Mon</span>
+</div>
+<div class="flex flex-col items-center gap-2 w-full group">
+<div class="relative w-full md:w-12 bg-slate-50 rounded-t-lg h-full flex items-end overflow-hidden group-hover:bg-slate-100 transition-colors">
+<div class="w-full bg-primary/80 h-[62%] rounded-t-lg relative group-hover:bg-primary transition-colors">
+<div class="opacity-0 group-hover:opacity-100 absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded pointer-events-none transition-opacity">62%</div>
+</div>
+</div>
+<span class="text-xs font-medium text-slate-400">Tue</span>
+</div>
+<div class="flex flex-col items-center gap-2 w-full group">
+<div class="relative w-full md:w-12 bg-slate-50 rounded-t-lg h-full flex items-end overflow-hidden group-hover:bg-slate-100 transition-colors">
+<div class="w-full bg-primary/80 h-[38%] rounded-t-lg relative group-hover:bg-primary transition-colors">
+<div class="opacity-0 group-hover:opacity-100 absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded pointer-events-none transition-opacity">38%</div>
+</div>
+</div>
+<span class="text-xs font-medium text-slate-400">Wed</span>
+</div>
+<div class="flex flex-col items-center gap-2 w-full group">
+<div class="relative w-full md:w-12 bg-slate-50 rounded-t-lg h-full flex items-end overflow-hidden group-hover:bg-slate-100 transition-colors">
+<div class="w-full bg-red-400 h-[78%] rounded-t-lg relative">
+<div class="opacity-0 group-hover:opacity-100 absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded pointer-events-none transition-opacity">78%</div>
+</div>
+</div>
+<span class="text-xs font-bold text-red-400">Thu</span>
+</div>
+<div class="flex flex-col items-center gap-2 w-full group">
+<div class="relative w-full md:w-12 bg-slate-50 rounded-t-lg h-full flex items-end overflow-hidden group-hover:bg-slate-100 transition-colors">
+<div class="w-full bg-primary/80 h-[55%] rounded-t-lg relative group-hover:bg-primary transition-colors">
+<div class="opacity-0 group-hover:opacity-100 absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded pointer-events-none transition-opacity">55%</div>
+</div>
+</div>
+<span class="text-xs font-medium text-slate-400">Fri</span>
+</div>
+<div class="flex flex-col items-center gap-2 w-full group">
+<div class="relative w-full md:w-12 bg-slate-50 rounded-t-lg h-full flex items-end overflow-hidden group-hover:bg-slate-100 transition-colors">
+<div class="w-full bg-secondary/30 h-[20%] rounded-t-lg relative group-hover:bg-secondary/50 transition-colors">
+<div class="opacity-0 group-hover:opacity-100 absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded pointer-events-none transition-opacity">20%</div>
+</div>
+</div>
+<span class="text-xs font-medium text-slate-400">Sat</span>
+</div>
+<div class="flex flex-col items-center gap-2 w-full group">
+<div class="relative w-full md:w-12 bg-slate-50 rounded-t-lg h-full flex items-end overflow-hidden group-hover:bg-slate-100 transition-colors">
+<div class="w-full bg-secondary/30 h-[15%] rounded-t-lg relative group-hover:bg-secondary/50 transition-colors">
+<div class="opacity-0 group-hover:opacity-100 absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded pointer-events-none transition-opacity">15%</div>
+</div>
+</div>
+<span class="text-xs font-medium text-slate-400">Sun</span>
+</div>
+</div>
+</div>
+<div class="bg-surface rounded-2xl p-6 md:p-8 shadow-soft border border-slate-100 flex flex-col">
+<h3 class="text-lg font-bold text-slate-900 mb-6">App Usage</h3>
+<div class="flex flex-col gap-5 flex-1">
+<div class="flex items-center gap-4">
+<div class="bg-white p-2 rounded-lg border border-slate-100 shadow-sm shrink-0">
+<img alt="VS Code" class="size-6" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA03Q0BLEVCBaJNVWGEQNzvFPgcAsBvFDnv0ysVVQY1Jr-05U4HdhLCDQaW8ARNAprFZ-20cJsLjKSZhN4Fkl-dMRFcEgOoyJNWj_FHf2XtvV2dMuzyo72UK5gjbotOn4eKwhqtcxTje1-6Z7Y3k9GQFr3wzCCUNi7yI2lHNmxhux2CU-IKd50UHWr_YU__AOa9uUFMly4fQZ9FX54y9Dq0DJlnLt86StxyE0ZxzAqkAxqAxxXAj4lMtmisq6X_DM5AUPV9P0Dsz8I"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between mb-1">
+<h4 class="text-sm font-semibold text-slate-700 truncate">VS Code</h4>
+<span class="text-xs font-medium text-slate-500">4h 12m</span>
+</div>
+<div class="w-full bg-slate-100 rounded-full h-2">
+<div class="bg-blue-500 h-2 rounded-full w-[65%]"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="bg-white p-2 rounded-lg border border-slate-100 shadow-sm shrink-0">
+<div class="size-6 bg-center bg-contain bg-no-repeat" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAbfbMqkKpVR_wcmaqqzYjapCheFqRRiuTdLiZh9VDcC0YYlozh1yxG6dbpk0OzkIjYudiDs4-ZsOXxsQ6zp6iHf83-XYQqUtMpdDNi82BhhITvaeEaqs7VWJ2-3cRy7bGdzkhwW-YS0SAwR5UIIrZxQiOU9-dHc4Mu7BoQFtmtsckHwGVibS2tzMLczGtfFD4JJTOfHv6wJuErdo6yN_OhkZD5tedFH_ufW5HPsNOlWZx2yTAFwNmtvkIY1_gjRVhBoRvoMIGcJtY");'></div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between mb-1">
+<h4 class="text-sm font-semibold text-slate-700 truncate">Google Chrome</h4>
+<span class="text-xs font-medium text-slate-500">1h 45m</span>
+</div>
+<div class="w-full bg-slate-100 rounded-full h-2">
+<div class="bg-blue-400 h-2 rounded-full w-[35%]"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="bg-white p-2 rounded-lg border border-slate-100 shadow-sm shrink-0">
+<img alt="Figma" class="size-6" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDil42SCTfpRV-7QWF_oyWc_muKG8EF1NWHF70Ql3pvDFh-EmTLxMal4YbVu-obTMidQqbccWxFgfvslYC4ob4w7PLV4aJKyUihCDDlJE8cdkF0oe49sSojqnMdecKwGp8kYTcba1atB9_guizmMPx6b3jmrFUhG-IhREu19Z8Mr7jbWZElIqrK2WHybKN_LX4MaMYcuQW4zWoZxoOaP9tvltH0FNxNlIcgw18-k0X235VAmmZPlLx0E8EHcuJZQ4l7iiBxbc4iBuI"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between mb-1">
+<h4 class="text-sm font-semibold text-slate-700 truncate">Figma</h4>
+<span class="text-xs font-medium text-slate-500">55m</span>
+</div>
+<div class="w-full bg-slate-100 rounded-full h-2">
+<div class="bg-purple-400 h-2 rounded-full w-[25%]"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="bg-white p-2 rounded-lg border border-slate-100 shadow-sm shrink-0">
+<img alt="Slack" class="size-6" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpCVN9Hfv6VyMz8D4fwoBXoQZYNDxHqWRi-IAnoxDWgfWmz5wE0fdGFb1NdJm10QHxm9wMTQKKEICZQQycSUs4lMv9lWAxfyvWwoY0e_r_9Vww9rwrGxBbJZbN-Ekgh2dK5RXywt0VjcTS_Nfh_kx7OO4HEInATMLFIa8EyNXiTriL-iTxHaTv-ZKa1cY4PqhvkUpTA8P0g-Yc7aw-VjKb1v2MBxd2Xp5aRjZ1SZ12Y0AsijSGaKsZjlCWeKnTb-bCgR8rFC1caFQ"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between mb-1">
+<h4 class="text-sm font-semibold text-slate-700 truncate">Slack</h4>
+<span class="text-xs font-medium text-slate-500">30m</span>
+</div>
+<div class="w-full bg-slate-100 rounded-full h-2">
+<div class="bg-yellow-400 h-2 rounded-full w-[15%]"></div>
+</div>
+</div>
+</div>
+</div>
+<button class="mt-6 w-full py-2.5 text-sm font-medium text-slate-500 border border-slate-200 rounded-xl hover:bg-slate-50 hover:text-slate-800 transition-colors">
+                        View Detailed Report
+                    </button>
+</div>
+</section>
+<section class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8">
+<div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-6 md:p-8 text-white shadow-lg relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
+<span class="material-symbols-outlined text-[150px]">tips_and_updates</span>
+</div>
+<div class="relative z-10 max-w-sm">
+<div class="flex items-center gap-2 mb-4 bg-white/20 w-fit px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md">
+<span class="material-symbols-outlined text-sm">auto_awesome</span>
+                            Smart Insight
+                        </div>
+<h3 class="text-2xl font-bold mb-2">Optimize your mornings</h3>
+<p class="text-blue-100 mb-6">Your fatigue levels spike at 2:00 PM. Scheduling high-focus tasks before 11:00 AM could improve your productivity score by 15%.</p>
+<button class="bg-white text-blue-700 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors shadow-sm">
+                            Adjust Schedule
+                        </button>
+</div>
+</div>
+<div class="bg-surface rounded-2xl p-6 md:p-8 shadow-soft border border-slate-100 flex flex-col justify-center">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-lg font-bold text-slate-900">Fatigue Distribution</h3>
+<span class="material-symbols-outlined text-slate-400">info</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative size-32 flex-shrink-0">
+<svg class="size-full -rotate-90" viewBox="0 0 36 36">
+<circle cx="18" cy="18" fill="none" r="15.915" stroke="#f1f5f9" stroke-width="4"></circle>
+<circle class="drop-shadow-sm" cx="18" cy="18" fill="none" r="15.915" stroke="#3b82f6" stroke-dasharray="70 30" stroke-dashoffset="0" stroke-width="4"></circle>
+<circle cx="18" cy="18" fill="none" r="15.915" stroke="#a855f7" stroke-dasharray="20 80" stroke-dashoffset="-70" stroke-width="4"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center flex-col">
+<span class="text-2xl font-bold text-slate-800">70%</span>
+<span class="text-[10px] text-slate-400 uppercase">Focus</span>
+</div>
+</div>
+<div class="flex flex-col gap-3 flex-1">
+<div class="flex items-center justify-between text-sm">
+<div class="flex items-center gap-2">
+<span class="size-3 rounded-full bg-blue-500"></span>
+<span class="text-slate-600">Deep Work</span>
+</div>
+<span class="font-bold text-slate-800">70%</span>
+</div>
+<div class="flex items-center justify-between text-sm">
+<div class="flex items-center gap-2">
+<span class="size-3 rounded-full bg-purple-500"></span>
+<span class="text-slate-600">Meetings</span>
+</div>
+<span class="font-bold text-slate-800">20%</span>
+</div>
+<div class="flex items-center justify-between text-sm">
+<div class="flex items-center gap-2">
+<span class="size-3 rounded-full bg-slate-200"></span>
+<span class="text-slate-600">Idle</span>
+</div>
+<span class="font-bold text-slate-800">10%</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+</body></html>

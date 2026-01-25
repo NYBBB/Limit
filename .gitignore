@@ -54,3 +54,9 @@ TestResult.xml
 nunit-*.xml
 
 .vs/
+*.ts
+*.js
+
+/src/EyeGuard.UI/ClientApp/node_modules
+*.ps1
+/src/EyeGuard.UI/ClientApp/node_modules/.bin

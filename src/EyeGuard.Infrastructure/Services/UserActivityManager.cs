@@ -14,15 +14,15 @@ public class UserActivityManager : IDisposable
     private readonly GlobalInputMonitor _inputMonitor;
     private readonly AudioDetector _audioDetector;
     private readonly FatigueEngine _fatigueEngine;
-    
+
     private bool _disposed;
-    
+
     // ===== Limit 3.0: 活跃检测增强 =====
     private bool _isFullscreen = false;
     private string _currentProcessName = "";
     private int _audioSilentSeconds = 0;  // 音频静音累积秒数（去抖用）
     private const int AudioDebounceSeconds = 5;  // 音频静音超过5秒才算真正停止
-    
+
     // ===== Beta 2 (A2): 心流护盾 =====
     private bool _isFlowMode = false;
     private DateTime _flowModeStartTime = DateTime.MinValue;
@@ -30,7 +30,7 @@ public class UserActivityManager : IDisposable
     private const int FlowModeThresholdSeconds = 20 * 60;  // 20 分钟
     private const double FlowModeFatigueMultiplier = 0.8;  // 心流模式疲劳倍率
     private const double FlowTaxPenalty = 5.0;  // 退出心流惩罚 (+5% 疲劳)
-    
+
     // ===== Beta 2 (A3): 23 分钟切换恢复法则 =====
     private bool _isRefocusing = false;
     private DateTime _refocusStartTime = DateTime.MinValue;
@@ -42,11 +42,16 @@ public class UserActivityManager : IDisposable
     /// 当前用户状态。
     /// </summary>
     public UserActivityState CurrentState { get; private set; } = UserActivityState.Idle;
-    
+
+    /// <summary>
+    /// 是否处于专注状态 (Active)
+    /// </summary>
+    public bool IsFocusing => CurrentState == UserActivityState.Active;
+
     /// <summary>
     /// Limit 3.0: 是否为被动消耗模式（看视频/全屏但无输入）
     /// </summary>
-    public bool IsPassiveConsumption => CurrentState == UserActivityState.PassiveConsumption 
+    public bool IsPassiveConsumption => CurrentState == UserActivityState.PassiveConsumption
                                         || CurrentState == UserActivityState.MediaMode;
 
     /// <summary>
@@ -63,12 +68,12 @@ public class UserActivityManager : IDisposable
     /// 离开阈值（秒）- 超过此时间认为用户离开。
     /// </summary>
     public int AwayThresholdSeconds { get; set; } = 300;
-    
+
     /// <summary>
     /// Limit 3.0: 当前是否全屏
     /// </summary>
     public bool IsFullscreen => _isFullscreen;
-    
+
     /// <summary>
     /// Limit 3.0: 当前进程名
     /// </summary>
@@ -118,12 +123,12 @@ public class UserActivityManager : IDisposable
     /// 状态变化事件。
     /// </summary>
     public event EventHandler<UserActivityState>? StateChanged;
-    
+
     /// <summary>
     /// Beta 2 (A2): 心流模式是否激活
     /// </summary>
     public bool IsFlowMode => _isFlowMode;
-    
+
     /// <summary>
     /// Beta 2 (A3): 是否在重聚焦状态
     /// </summary>
@@ -165,17 +170,20 @@ public class UserActivityManager : IDisposable
     {
         if (!IsRunning) return;
 
+        // Focus Commitment 倒计时
+        CheckFocusCommitment();
+
         // 检测输入状态
         _inputMonitor.CheckIdleState();
-        
+
         double idleSeconds = _inputMonitor.IdleSeconds;
         bool isAudioPlaying = _audioDetector.IsAudioPlaying;
-        
+
         // Phase 7 修复：直接从 SettingsService 读取设置（不再使用硬编码或事件同步）
         var settings = SettingsService.Instance.Settings;
         int idleThreshold = settings.IdleThresholdSeconds;
         int mediaIdleThreshold = idleThreshold * 2;  // 媒体模式阈值为普通阈值的2倍
-        
+
         // Limit 3.0: 音频去抖逻辑（修复状态横跳）
         // 音频可能因为视频静音片段导致瞬间静音，需要缓冲
         if (isAudioPlaying)
@@ -186,47 +194,47 @@ public class UserActivityManager : IDisposable
         {
             _audioSilentSeconds++;  // 静音累积
         }
-        
+
         // 判定是否有持续音频（5秒内有过音频就认为有）
         bool hasAudio = (_audioSilentSeconds < AudioDebounceSeconds);
-        
+
         // Limit 3.0: 活跃检测公式
         bool isPassivelyActive = hasAudio || _isFullscreen;
-        
+
         // 确定当前空闲阈值（直接使用设置值）
         int currentIdleThreshold = (hasAudio || _isFullscreen)
-            ? mediaIdleThreshold 
+            ? mediaIdleThreshold
             : idleThreshold;
 
         // 状态机逻辑
         var previousState = CurrentState;
-        
+
         // Phase 7 修复：使用设置的空闲阈值判断 hasRecentInput
         // 原来硬编码为 2 秒，现在正确使用设置
         bool hasRecentInput = idleSeconds < idleThreshold;
-        
+
         // Limit 3.0 判定逻辑（修复状态横跳问题）：
         // 1. 有输入（idleSeconds < idleThreshold）-> Active
         // 2. 无输入但有音频/全屏，且未超过阈值 -> PassiveConsumption (低负载，不恢复)
         // 3. 无输入无音频，超过空闲阈值 -> Idle (恢复疲劳)
         // 4. 长时间无活动 -> Away (快速恢复)
-        
+
         if (hasRecentInput)
         {
             // 有物理输入 - 主动工作状态
             CurrentState = UserActivityState.Active;
             CurrentSessionSeconds++;
             TodayActiveSeconds++;
-            
+
             // Beta 2: 检测心流模式和重聚焦状态
             CheckFlowMode();
             CheckRefocusStatus();
-            
+
             // 计算有效疲劳倍率
             double fatigueMultiplier = 1.0;
             if (_isFlowMode) fatigueMultiplier *= FlowModeFatigueMultiplier;  // A2: 心流保护
             if (_isRefocusing) fatigueMultiplier *= RefocusFatigueMultiplier; // A3: 重聚焦惩罚
-            
+
             _fatigueEngine.IncreaseFatigue(fatigueMultiplier, isMediaMode: false);
         }
         else if (isPassivelyActive && idleSeconds < currentIdleThreshold)
@@ -243,7 +251,7 @@ public class UserActivityManager : IDisposable
             // 真正的空闲状态（无输入、无音频或音频超时、非全屏）
             CurrentState = UserActivityState.Idle;
             CurrentSessionSeconds = 0;
-            
+
             // 空闲状态：恢复疲劳
             _fatigueEngine.DecreaseFatigue(1);
         }
@@ -252,7 +260,7 @@ public class UserActivityManager : IDisposable
             // 离开状态
             CurrentState = UserActivityState.Away;
             CurrentSessionSeconds = 0;
-            
+
             // 离开状态：快速恢复疲劳
             _fatigueEngine.DecreaseFatigue(2);
         }
@@ -282,7 +290,7 @@ public class UserActivityManager : IDisposable
         LongestSessionSeconds = 0;
         CurrentState = UserActivityState.Idle;
     }
-    
+
     /// <summary>
     /// 仅重置当前连续工作时长（用于休息任务完成后）
     /// </summary>
@@ -307,9 +315,9 @@ public class UserActivityManager : IDisposable
             _ => "未知状态"
         };
     }
-    
+
     // ===== Limit 3.0: 全屏检测与状态设置 =====
-    
+
     /// <summary>
     /// 设置当前全屏状态（由外部窗口检测调用）
     /// </summary>
@@ -317,7 +325,7 @@ public class UserActivityManager : IDisposable
     {
         _isFullscreen = isFullscreen;
     }
-    
+
     /// <summary>
     /// 设置当前进程名（由外部窗口检测调用）
     /// </summary>
@@ -325,9 +333,9 @@ public class UserActivityManager : IDisposable
     {
         _currentProcessName = processName;
     }
-    
+
     // ===== Beta 2 (A2): 心流护盾检测 =====
-    
+
     /// <summary>
     /// 检测并更新心流模式状态
     /// </summary>
@@ -345,7 +353,7 @@ public class UserActivityManager : IDisposable
             }
             return;
         }
-        
+
         // 检测是否可以进入心流模式
         // 条件：同一应用连续使用超过 20 分钟
         if (_flowModeApp == _currentProcessName)
@@ -364,9 +372,9 @@ public class UserActivityManager : IDisposable
             _flowModeStartTime = DateTime.Now;
         }
     }
-    
+
     // ===== Beta 2 (A3): 23 分钟切换恢复法则 =====
-    
+
     /// <summary>
     /// 检查重聚焦状态（簇切换后 23 分钟内增加疲劳）
     /// </summary>
@@ -382,7 +390,7 @@ public class UserActivityManager : IDisposable
             }
         }
     }
-    
+
     /// <summary>
     /// 外部调用：通知簇切换（触发 A3 法则）
     /// </summary>
@@ -397,7 +405,59 @@ public class UserActivityManager : IDisposable
         }
         _lastClusterId = newClusterId;
     }
-    
+
+    // ===== Focus Commitment (专注承诺) =====
+    private bool _isFocusCommitmentActive = false;
+    private int _focusTotalSeconds = 0;
+    private int _focusRemainingSeconds = 0;
+    private string _focusTaskName = "";
+
+    public bool IsFocusCommitmentActive => _isFocusCommitmentActive;
+    public int FocusTotalSeconds => _focusTotalSeconds;
+    public int FocusRemainingSeconds => _focusRemainingSeconds;
+    public string FocusTaskName => _focusTaskName;
+
+    /// <summary>
+    /// 开始专注承诺会话
+    /// </summary>
+    public void StartFocusCommitment(int minutes, string taskName)
+    {
+        _isFocusCommitmentActive = true;
+        _focusTotalSeconds = minutes * 60;
+        _focusRemainingSeconds = _focusTotalSeconds;
+        _focusTaskName = taskName;
+        Debug.WriteLine($"[UserActivityManager] ⚡ Focus Commitment Started: {taskName} ({minutes}m)");
+    }
+
+    /// <summary>
+    /// 停止专注承诺会话
+    /// </summary>
+    public void StopFocusCommitment(bool completed)
+    {
+        _isFocusCommitmentActive = false;
+        _focusRemainingSeconds = 0;
+        Debug.WriteLine($"[UserActivityManager] ⏹️ Focus Commitment Stopped (Completed: {completed})");
+    }
+
+    /// <summary>
+    /// 检查并更新专注承诺倒计时 (通常在 Tick 中调用)
+    /// </summary>
+    private void CheckFocusCommitment()
+    {
+        if (!_isFocusCommitmentActive) return;
+
+        if (_focusRemainingSeconds > 0)
+        {
+            _focusRemainingSeconds--;
+        }
+        else
+        {
+            // 时间到
+            StopFocusCommitment(true);
+            // TODO: 触发通知
+        }
+    }
+
     /// <summary>
     /// Limit 3.0: 获取调试信息字典
     /// </summary>
@@ -423,11 +483,11 @@ public class UserActivityManager : IDisposable
     public void Dispose()
     {
         if (_disposed) return;
-        
+
         Stop();
         _inputMonitor.Dispose();
         _audioDetector.Dispose();
-        
+
         _disposed = true;
         GC.SuppressFinalize(this);
     }

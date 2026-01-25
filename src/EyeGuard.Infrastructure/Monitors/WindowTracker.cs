@@ -19,30 +19,33 @@ public class WindowTracker : IWindowTracker
 {
     private System.Threading.Timer? _checkTimer;
     private WindowInfo? _lastWindowInfo;
-    
+
     // ===== Limit 3.0 性能优化: PID 缓存 =====
     // PID 缓存：窗口句柄 -> (PID, 缓存时间)
     private Dictionary<IntPtr, (int Pid, DateTime CachedAt)> _pidCache = new();
     private const int PidCacheSeconds = 10; // PID 缓存时长（秒）
-    
+
     // ===== Limit 3.0 性能优化: URL 防抖 =====
     // URL 缓存：窗口句柄 -> (URL, 缓存时间)
     private Dictionary<IntPtr, (string Url, DateTime CachedAt)> _urlCache = new();
     private const int UrlCacheSeconds = 30; // Beta 2: 增加缓存时间到 30 秒
-    
+
     // URL 防抖：窗口句柄 -> 首次稳定时间
     private Dictionary<IntPtr, DateTime> _windowStableTime = new();
     private const int DebounceSeconds = 5; // Beta 2: 增加防抖时间到 5 秒
-    
+
     // Beta 2: 防止并发 URL 获取
     private HashSet<IntPtr> _urlFetchingSet = new();
-    
+
     public event EventHandler<WindowInfo>? ActiveWindowChanged;
 
     public void Start()
     {
+        // 先立即捕获当前窗口并触发事件
+        CheckActiveWindow(null);
+
         // 每秒检查一次当前窗口
-        _checkTimer = new System.Threading.Timer(CheckActiveWindow, null, 0, 1000);
+        _checkTimer = new System.Threading.Timer(CheckActiveWindow, null, 1000, 1000);
     }
 
     public void Stop()
@@ -61,7 +64,7 @@ public class WindowTracker : IWindowTracker
         var currentWindow = GetForegroundWindowInfo();
         if (currentWindow == null) return;
 
-        bool changed = _lastWindowInfo == null || 
+        bool changed = _lastWindowInfo == null ||
                        currentWindow.ProcessName != _lastWindowInfo.ProcessName ||
                        currentWindow.WindowTitle != _lastWindowInfo.WindowTitle;
 
@@ -85,10 +88,10 @@ public class WindowTracker : IWindowTracker
             if (GetWindowText(hwnd, Buff, nChars) > 0)
             {
                 string title = Buff.ToString();
-                
+
                 // ===== Limit 3.0 性能优化: PID 缓存 =====
                 GetWindowThreadProcessId(hwnd, out uint pid);
-                
+
                 // 先尝试从缓存获取 Process
                 Process? process = null;
                 if (_pidCache.TryGetValue(hwnd, out var cachedPid))
@@ -107,7 +110,7 @@ public class WindowTracker : IWindowTracker
                         }
                     }
                 }
-                
+
                 // 缓存未命中或已过期，重新获取
                 if (process == null)
                 {
@@ -116,17 +119,17 @@ public class WindowTracker : IWindowTracker
                     // Beta 2: 减少日志输出（仅在调试时开启）
                     // Debug.WriteLine($"[WindowTracker] PID cached: {process.ProcessName} (PID: {pid})");
                 }
-                
+
                 // 简单的敏感词过滤
                 string sanitized = SanitizeTitle(title);
-                
+
                 // ===== Limit 3.0 性能优化: URL 防抖 + 缓存 =====
                 string? url = null;
                 if (WebsiteRecognizer.IsBrowserProcess(process.ProcessName))
                 {
                     url = GetCachedOrFetchUrlWithDebounce(hwnd);
                 }
-                
+
                 return new WindowInfo(process.ProcessName, title, sanitized, url);
             }
         }
@@ -137,7 +140,7 @@ public class WindowTracker : IWindowTracker
 
         return null;
     }
-    
+
     /// <summary>
     /// Limit 3.0: 带防抖的 URL 获取（过滤快速切换）
     /// </summary>
@@ -152,7 +155,7 @@ public class WindowTracker : IWindowTracker
                 return cached.Url;
             }
         }
-        
+
         // 2. 防抖逻辑：检查窗口是否稳定停留
         if (!_windowStableTime.TryGetValue(hwnd, out var stableTime))
         {
@@ -161,7 +164,7 @@ public class WindowTracker : IWindowTracker
             // 返回缓存的旧值（如果有）或 null
             return cached.Url;
         }
-        
+
         var stableDuration = (DateTime.Now - stableTime).TotalSeconds;
         if (stableDuration < DebounceSeconds)
         {
@@ -169,7 +172,7 @@ public class WindowTracker : IWindowTracker
             Debug.WriteLine($"[WindowTracker] URL debouncing: {stableDuration:F1}s < {DebounceSeconds}s");
             return cached.Url;
         }
-        
+
         // 3. 窗口已稳定，异步获取 URL（不阻塞主线程）
         // Beta 2: 添加并发锁，防止重复获取
         if (!_urlCache.ContainsKey(hwnd) || (DateTime.Now - cached.CachedAt).TotalSeconds >= UrlCacheSeconds)
@@ -184,7 +187,7 @@ public class WindowTracker : IWindowTracker
                 }
                 _urlFetchingSet.Add(hwnd);
             }
-            
+
             _ = Task.Run(() =>
             {
                 try
@@ -205,13 +208,13 @@ public class WindowTracker : IWindowTracker
                 }
             });
         }
-        
+
         // 返回缓存值（如果有）
         return cached.Url;
     }
-    
 
-    
+
+
     private string SanitizeTitle(string title)
     {
         // TODO: 实现更完善的脱敏逻辑
@@ -219,7 +222,7 @@ public class WindowTracker : IWindowTracker
             return "***";
         return title;
     }
-    
+
     public void Dispose()
     {
         Stop();

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EyeGuard - Light Mode Dashboard</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ff2a2a","primary-hover": "#d92020",
+                        "accent-cyan": "#06b6d4",
+                        "background-main": "#f3f5f8","surface-card": "#ffffff",
+                        "sidebar-bg": "#fafafa","text-main": "#1e293b","text-secondary": "#64748b","border-light": "#e2e8f0",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "Noto Sans", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                    boxShadow: {
+                        "subtle": "0 4px 25px -5px rgba(0, 0, 0, 0.05)",
+                        "card": "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)",
+                        "glow": "0 0 20px -5px rgba(255, 42, 42, 0.25)",
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .fatigue-ring-bg {
+            stroke: #e2e8f0;}
+        .fatigue-ring-progress {
+            stroke: #ff2a2a;
+            stroke-linecap: round;
+            transition: stroke-dasharray 0.5s ease;
+            filter: drop-shadow(0 4px 6px rgba(255, 42, 42, 0.3));
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: .85; transform: scale(0.95); }
+        }::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+    </style>
+</head>
+<body class="bg-background-main text-text-main font-display overflow-hidden antialiased">
+<div class="relative flex h-screen w-full bg-background-main overflow-hidden">
+<aside class="w-72 hidden lg:flex flex-col h-full border-r border-border-light bg-sidebar-bg z-20 shadow-sm">
+<div class="p-6 flex flex-col h-full justify-between">
+<div class="flex flex-col gap-6">
+<div class="flex gap-4 items-center">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-12 ring-2 ring-white shadow-md" data-alt="Portrait of Dr. Smith smiling" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBPWZE8aXnXuNp1l-Q2Rig9ZsQeNSyqoTNsDxx21ablPVlnAEvV6R5DxuQcHeayN7ecuTx0wILE0hGj3cHfkkQfOEEa6X1M93zwNUpcX52kOFRk8GpZoxl7sBzSuQiloTvup5fK5BGKi3vkRusLBoA8bR78zqqtYzNxxzwdDguIpa0QOX0irDe_ThHDRIeFRKwP5_nY0VOBrJDQqQOs66A7bF3B-At800rg9HxNKBBWp6sI1UzTwA7vnXaSeCOy2CxzdQqnM9eIcwQ");'></div>
+<div class="flex flex-col">
+<h1 class="text-text-main text-lg font-bold leading-tight">Dr. Smith</h1>
+<p class="text-text-secondary text-sm font-medium">EyeGuard Pro</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 mt-4">
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl bg-white text-primary border border-border-light shadow-sm group transition-all" href="#">
+<span class="material-symbols-outlined text-primary">dashboard</span>
+<p class="text-base font-bold">Dashboard</p>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white hover:shadow-sm hover:text-text-main transition-all group text-text-secondary" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">bar_chart</span>
+<p class="text-base font-medium">Analysis</p>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white hover:shadow-sm hover:text-text-main transition-all group text-text-secondary" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">settings</span>
+<p class="text-base font-medium">Settings</p>
+</a>
+</nav>
+</div>
+<div class="mt-auto">
+<button class="flex w-full items-center justify-center gap-2 rounded-xl bg-white border border-border-light p-3 text-text-secondary hover:text-text-main hover:shadow-sm transition-all">
+<span class="material-symbols-outlined text-sm">logout</span>
+<span class="text-sm font-bold">Sign Out</span>
+</button>
+</div>
+</div>
+</aside>
+<div class="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
+<header class="flex items-center justify-between border-b border-border-light bg-white/80 backdrop-blur-md px-8 py-4 z-20">
+<div class="flex items-center gap-3 text-text-main">
+<div class="size-8 text-white flex items-center justify-center bg-primary rounded-lg shadow-glow">
+<span class="material-symbols-outlined text-xl">visibility</span>
+</div>
+<h2 class="text-xl font-extrabold tracking-wide">EyeGuard</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex items-center bg-background-main rounded-full px-4 h-10 w-64 border border-transparent focus-within:border-primary/50 focus-within:bg-white transition-all">
+<span class="material-symbols-outlined text-text-secondary text-[20px]">search</span>
+<input class="bg-transparent border-none text-text-main placeholder-text-secondary text-sm w-full focus:ring-0" placeholder="Search..." type="text"/>
+</div>
+<button class="relative size-10 flex items-center justify-center rounded-full bg-white border border-border-light text-text-secondary hover:text-primary hover:border-primary/30 hover:shadow-sm transition-all">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-primary rounded-full border border-white"></span>
+</button>
+<button class="lg:hidden size-10 flex items-center justify-center rounded-full bg-white border border-border-light text-text-main shadow-sm">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 scroll-smooth bg-background-main">
+<div class="max-w-7xl mx-auto flex flex-col gap-8">
+<section class="flex flex-col md:flex-row items-center justify-center gap-12 min-h-[360px] bg-white rounded-3xl p-8 shadow-subtle border border-border-light relative overflow-hidden">
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+<div class="absolute bottom-0 left-0 w-64 h-64 bg-accent-cyan/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
+<div class="relative size-[300px] md:size-[340px] flex items-center justify-center">
+<svg class="size-full -rotate-90 transform" viewBox="0 0 200 200">
+<circle class="fatigue-ring-bg" cx="100" cy="100" fill="none" r="85" stroke-width="10"></circle>
+<circle class="fatigue-ring-progress" cx="100" cy="100" fill="none" r="85" stroke-dasharray="416 534" stroke-width="10"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center text-center z-10">
+<span class="material-symbols-outlined text-primary text-5xl mb-2 animate-pulse-slow">cardiology</span>
+<h1 class="text-text-main text-7xl font-extrabold tracking-tighter">78<span class="text-4xl align-top text-primary">%</span></h1>
+<p class="text-text-secondary text-sm font-bold uppercase tracking-widest mt-1">Fatigue Level</p>
+<div class="mt-4 flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-50 border border-red-100 text-primary">
+<span class="flex size-2 rounded-full bg-primary animate-ping"></span>
+<span class="text-xs font-bold tracking-wider">CRITICAL LEVEL</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col max-w-sm text-center md:text-left z-10">
+<h3 class="text-2xl font-bold text-text-main mb-2">High Fatigue Detected</h3>
+<p class="text-text-secondary mb-6">Your blinking rate has decreased significantly. We recommend taking a break immediately to prevent eye strain.</p>
+<div class="flex gap-4 justify-center md:justify-start">
+<button class="px-6 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl font-semibold shadow-glow transition-all active:scale-95 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">coffee</span>
+                                     Take Break
+                                 </button>
+<button class="px-6 py-2.5 bg-white border border-border-light hover:bg-gray-50 text-text-main rounded-xl font-semibold shadow-sm transition-all">
+                                     Details
+                                 </button>
+</div>
+</div>
+</section>
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-8">
+<div class="bg-surface-card border border-border-light rounded-3xl p-6 md:p-8 flex flex-col justify-between h-full shadow-subtle hover:shadow-card transition-shadow duration-300">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-text-secondary text-xs font-bold uppercase tracking-wider mb-1">Current Session</h3>
+<p class="text-text-main text-2xl font-bold">Continuous Focus</p>
+</div>
+<div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+<div class="bg-center bg-no-repeat bg-contain size-8" data-alt="Google Chrome Logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAbfbMqkKpVR_wcmaqqzYjapCheFqRRiuTdLiZh9VDcC0YYlozh1yxG6dbpk0OzkIjYudiDs4-ZsOXxsQ6zp6iHf83-XYQqUtMpdDNi82BhhITvaeEaqs7VWJ2-3cRy7bGdzkhwW-YS0SAwR5UIIrZxQiOU9-dHc4Mu7BoQFtmtsckHwGVibS2tzMLczGtfFD4JJTOfHv6wJuErdo6yN_OhkZD5tedFH_ufW5HPsNOlWZx2yTAFwNmtvkIY1_gjRVhBoRvoMIGcJtY");'></div>
+</div>
+</div>
+<div class="flex flex-col gap-1 mb-8">
+<div class="text-5xl md:text-6xl font-extrabold text-text-main tracking-tight font-display">
+                                    4<span class="text-2xl text-text-secondary ml-1 font-medium">h</span> 12<span class="text-2xl text-text-secondary ml-1 font-medium">m</span>
+</div>
+<p class="text-primary text-sm font-semibold flex items-center gap-2 mt-2 bg-red-50 w-fit px-3 py-1 rounded-lg">
+<span class="material-symbols-outlined text-base">warning</span>
+                                    Exceeds limit by 1h 12m
+                                </p>
+</div>
+<div class="mt-auto pt-4 border-t border-border-light">
+<div class="flex items-center justify-between text-sm text-text-secondary">
+<span>Started at 09:30 AM</span>
+<span class="font-semibold text-text-main">Chrome</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-card border border-border-light rounded-3xl p-6 md:p-8 h-full shadow-subtle hover:shadow-card transition-shadow duration-300">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-text-main text-lg font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-primary bg-primary/10 p-1 rounded-md">bolt</span>
+                                    Top Drainers
+                                </h3>
+<button class="text-text-secondary text-xs font-bold hover:text-primary transition-colors uppercase tracking-wide">View All</button>
+</div>
+<div class="flex flex-col gap-5">
+<div class="group">
+<div class="flex justify-between text-sm mb-2">
+<span class="text-text-main font-semibold flex items-center gap-2">
+<span class="size-2 bg-primary rounded-full"></span> VS Code
+                                        </span>
+<span class="text-text-main font-bold">35%</span>
+</div>
+<div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+<div class="bg-primary h-full rounded-full w-[35%] shadow-[0_2px_4px_rgba(255,42,42,0.3)]"></div>
+</div>
+</div>
+<div class="group">
+<div class="flex justify-between text-sm mb-2">
+<span class="text-text-main font-semibold flex items-center gap-2">
+<span class="size-2 bg-primary/70 rounded-full"></span> Figma
+                                        </span>
+<span class="text-text-main font-bold">20%</span>
+</div>
+<div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+<div class="bg-primary/70 h-full rounded-full w-[20%]"></div>
+</div>
+</div>
+<div class="group">
+<div class="flex justify-between text-sm mb-2">
+<span class="text-text-main font-semibold flex items-center gap-2">
+<span class="size-2 bg-primary/40 rounded-full"></span> Slack
+                                        </span>
+<span class="text-text-main font-bold">12%</span>
+</div>
+<div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+<div class="bg-primary/40 h-full rounded-full w-[12%]"></div>
+</div>
+</div>
+<div class="group">
+<div class="flex justify-between text-sm mb-2">
+<span class="text-text-main font-semibold flex items-center gap-2">
+<span class="size-2 bg-primary/20 rounded-full"></span> Spotify
+                                        </span>
+<span class="text-text-main font-bold">8%</span>
+</div>
+<div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+<div class="bg-primary/20 h-full rounded-full w-[8%]"></div>
+</div>
+</div>
+</div>
+<div class="mt-6 pt-5 border-t border-border-light flex items-start gap-3 text-xs text-text-secondary">
+<span class="material-symbols-outlined text-sm text-primary mt-0.5">info</span>
+<p>High resource consumption detected. Consider closing unused VS Code extensions.</p>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+
+</body></html>
