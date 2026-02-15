@@ -2,8 +2,6 @@
 
 **Limit** is a modern Windows desktop application designed to help users manage screen time, monitor digital habits, and reduce eye strain through intelligent usage tracking and break reminders. Built with **.NET 8** and **WinUI 3**, it follows strict Clean Architecture principles to ensure scalability and maintainability.
 
-![Dashboard Preview](assets/dashboard_preview.png)
-*(Note: Add a screenshot of your dashboard here)*
 
 ## ✨ Key Features
 
@@ -37,7 +35,7 @@
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/yourusername/Limit.git
+    git clone https://github.com/NYBBB/Limit.git
     cd Limit
     ```
 
