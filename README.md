@@ -1,4 +1,4 @@
-# Limit 👁️
+# Limit
 
 **Limit** is a modern Windows desktop application designed to help users manage screen time, monitor digital habits, and reduce eye strain through intelligent usage tracking and break reminders. Built with **.NET 8** and **WinUI 3**, it follows strict Clean Architecture principles to ensure scalability and maintainability.
 
